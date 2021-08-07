@@ -5,10 +5,10 @@ The best place to clone this repo is inside the folder Scripts of RE.
 
 ## Disclaimer
 
-Most of those scripts are tested only on [Demise Server](https://www.uogdemise.com/) but feel free to fix it for your server and send me a PR
+Most of these scripts are tested only on [Demise Server](https://www.uogdemise.com/) but feel free to fix it for your server and send me a PR
 Some scripts are under development or just for reference purpose. Do not expect that all is perfect!
 
-## Use those scripts
+## Use the scripts
 
 Clone this repo into RazorEnhanced _Scripts_ folder and add all C# files you need
 
