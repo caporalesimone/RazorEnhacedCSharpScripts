@@ -1,9 +1,12 @@
 # C# Scripts for RazorEnhanced
+
 This is collection of C# scripts for [RazorEnhanced](http://razorenhanced.net/)
+The best place to clone this repo is inside the folder Scripts of RE.
+
+## Disclaimer
 
 Most of those scripts are tested only on [Demise Server](https://www.uogdemise.com/) but feel free to fix it for your server and send me a PR
-
-The best place to clone this repo is inside the folder Scripts of RE.
+Some scripts are under development or just for reference purpose. Do not expect that all is perfect!
 
 ## Use those scripts
 
