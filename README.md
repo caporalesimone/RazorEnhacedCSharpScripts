@@ -1,6 +1,6 @@
 # C# Scripts for RazorEnhanced
 
-This is collection of C# scripts for [RazorEnhanced](http://razorenhanced.net/)
+This is a collection of C# scripts for [RazorEnhanced](http://razorenhanced.net/)
 The best place to clone this repo is inside the folder Scripts of RE.
 
 ## Disclaimer
