@@ -29,12 +29,20 @@ namespace BODS
     {
         private const string scriptName = "SSBodsFiller by SimonSoft - 2021";
         private const string json_secure_container = "SSBODsFiller_SecureContainer"; // JSON Key with the latest secure container serial
+        private const string json_tailor_talisman = "SSBODsFiller_TailorTalisman";   // JSON Key with the latest tailoring talisman serial
+        private const string json_blacksmith_talisman = "SSBODsFiller_BlackSmithTalisman";   // JSON Key with the latest blacksmithy talisman serial
 
         private const int delayUseItem = 600;
         private const int delayDragItem = 600;
         private const int delayGump = 15000;
 
         private bool forcedStop = false;
+
+        private int secureFilledBodContainerSerial = 0;
+        private int secureResourceContainerSerial = 0;
+
+        private int talismanTailoringSerial = 0;
+        private int talismanBlackSmithSerial = 0;
 
         private ListBox lstBODs;
 
@@ -56,12 +64,17 @@ namespace BODS
         private ToolStripStatusLabel lblStatus;
         private ToolStripProgressBar progressBar;
 
-        private int secureFilledBodContainerSerial = 0;
         private ToolStripStatusLabel lblCrafting;
         private PictureBox pictureBox;
         private Button btnCutter;
         private Button btnSmelter;
-        private int secureResourceContainerSerial = 0;
+        private Button btnTailorTalisman;
+        private Button btnBlacksmithyTalisman;
+        private Label label1;
+        private Label label2;
+        private Label lblTailoringTalisman;
+        private Label lblBlackSmithyTalisman;
+        
 
         public SSBodsFiller()
         {
@@ -77,6 +90,12 @@ namespace BODS
                     lblSecureContainer.Text = target.Properties[0].ToString();
                 }
             }
+
+            talismanTailoringSerial = StoredData.GetData<int>(json_tailor_talisman, false);
+            lblTailoringTalisman.Text = (talismanTailoringSerial == 0) ? "NO" : "YES"; 
+            
+            talismanBlackSmithSerial = StoredData.GetData<int>(json_blacksmith_talisman, false);
+            lblBlackSmithyTalisman.Text = (talismanBlackSmithSerial == 0) ? "NO" : "YES";
         }
         public void Run()
         {
@@ -105,6 +124,12 @@ namespace BODS
             this.pictureBox = new System.Windows.Forms.PictureBox();
             this.btnCutter = new System.Windows.Forms.Button();
             this.btnSmelter = new System.Windows.Forms.Button();
+            this.btnTailorTalisman = new System.Windows.Forms.Button();
+            this.btnBlacksmithyTalisman = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.lblTailoringTalisman = new System.Windows.Forms.Label();
+            this.lblBlackSmithyTalisman = new System.Windows.Forms.Label();
             this.statusStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox)).BeginInit();
             this.SuspendLayout();
@@ -166,9 +191,9 @@ namespace BODS
             // btnAddResourceContainer
             // 
             this.btnAddResourceContainer.Enabled = false;
-            this.btnAddResourceContainer.Location = new System.Drawing.Point(282, 28);
+            this.btnAddResourceContainer.Location = new System.Drawing.Point(261, 28);
             this.btnAddResourceContainer.Name = "btnAddResourceContainer";
-            this.btnAddResourceContainer.Size = new System.Drawing.Size(132, 24);
+            this.btnAddResourceContainer.Size = new System.Drawing.Size(118, 24);
             this.btnAddResourceContainer.TabIndex = 5;
             this.btnAddResourceContainer.Text = "Add resources container";
             this.btnAddResourceContainer.UseVisualStyleBackColor = true;
@@ -178,7 +203,7 @@ namespace BODS
             // lbl_1
             // 
             this.lbl_1.AutoSize = true;
-            this.lbl_1.Location = new System.Drawing.Point(258, 12);
+            this.lbl_1.Location = new System.Drawing.Point(259, 12);
             this.lbl_1.Name = "lbl_1";
             this.lbl_1.Size = new System.Drawing.Size(57, 17);
             this.lbl_1.TabIndex = 6;
@@ -187,7 +212,7 @@ namespace BODS
             // lblSecureContainer
             // 
             this.lblSecureContainer.AutoSize = true;
-            this.lblSecureContainer.Location = new System.Drawing.Point(299, 12);
+            this.lblSecureContainer.Location = new System.Drawing.Point(300, 12);
             this.lblSecureContainer.Name = "lblSecureContainer";
             this.lblSecureContainer.Size = new System.Drawing.Size(56, 17);
             this.lblSecureContainer.TabIndex = 7;
@@ -196,9 +221,9 @@ namespace BODS
             // btnAddStoreBODsContainer
             // 
             this.btnAddStoreBODsContainer.Enabled = false;
-            this.btnAddStoreBODsContainer.Location = new System.Drawing.Point(282, 71);
+            this.btnAddStoreBODsContainer.Location = new System.Drawing.Point(403, 28);
             this.btnAddStoreBODsContainer.Name = "btnAddStoreBODsContainer";
-            this.btnAddStoreBODsContainer.Size = new System.Drawing.Size(132, 24);
+            this.btnAddStoreBODsContainer.Size = new System.Drawing.Size(119, 24);
             this.btnAddStoreBODsContainer.TabIndex = 8;
             this.btnAddStoreBODsContainer.Text = "Store finished BODs";
             this.btnAddStoreBODsContainer.UseVisualStyleBackColor = true;
@@ -208,7 +233,7 @@ namespace BODS
             // lbl_2
             // 
             this.lbl_2.AutoSize = true;
-            this.lbl_2.Location = new System.Drawing.Point(258, 55);
+            this.lbl_2.Location = new System.Drawing.Point(400, 12);
             this.lbl_2.Name = "lbl_2";
             this.lbl_2.Size = new System.Drawing.Size(87, 17);
             this.lbl_2.TabIndex = 9;
@@ -217,7 +242,7 @@ namespace BODS
             // lblStoreBODs
             // 
             this.lblStoreBODs.AutoSize = true;
-            this.lblStoreBODs.Location = new System.Drawing.Point(323, 55);
+            this.lblStoreBODs.Location = new System.Drawing.Point(465, 12);
             this.lblStoreBODs.Name = "lblStoreBODs";
             this.lblStoreBODs.Size = new System.Drawing.Size(56, 17);
             this.lblStoreBODs.TabIndex = 10;
@@ -232,7 +257,7 @@ namespace BODS
             this.lblCrafting});
             this.statusStrip.Location = new System.Drawing.Point(0, 292);
             this.statusStrip.Name = "statusStrip";
-            this.statusStrip.Size = new System.Drawing.Size(447, 26);
+            this.statusStrip.Size = new System.Drawing.Size(566, 26);
             this.statusStrip.TabIndex = 11;
             this.statusStrip.Text = "statusStrip1";
             // 
@@ -256,7 +281,7 @@ namespace BODS
             // btnStart
             // 
             this.btnStart.Enabled = false;
-            this.btnStart.Location = new System.Drawing.Point(262, 113);
+            this.btnStart.Location = new System.Drawing.Point(369, 197);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(80, 27);
             this.btnStart.TabIndex = 12;
@@ -267,7 +292,7 @@ namespace BODS
             // btnStop
             // 
             this.btnStop.Enabled = false;
-            this.btnStop.Location = new System.Drawing.Point(355, 113);
+            this.btnStop.Location = new System.Drawing.Point(455, 197);
             this.btnStop.Name = "btnStop";
             this.btnStop.Size = new System.Drawing.Size(80, 27);
             this.btnStop.TabIndex = 13;
@@ -277,7 +302,7 @@ namespace BODS
             // 
             // pictureBox
             // 
-            this.pictureBox.Location = new System.Drawing.Point(262, 153);
+            this.pictureBox.Location = new System.Drawing.Point(262, 164);
             this.pictureBox.Name = "pictureBox";
             this.pictureBox.Size = new System.Drawing.Size(60, 60);
             this.pictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -304,9 +329,73 @@ namespace BODS
             this.btnSmelter.UseVisualStyleBackColor = true;
             this.btnSmelter.Click += new System.EventHandler(this.btnSmelter_Click);
             // 
+            // btnTailorTalisman
+            // 
+            this.btnTailorTalisman.Location = new System.Drawing.Point(262, 85);
+            this.btnTailorTalisman.Name = "btnTailorTalisman";
+            this.btnTailorTalisman.Size = new System.Drawing.Size(118, 24);
+            this.btnTailorTalisman.TabIndex = 17;
+            this.btnTailorTalisman.Text = "Tailoring talisman";
+            this.btnTailorTalisman.UseVisualStyleBackColor = true;
+            this.btnTailorTalisman.Click += new System.EventHandler(this.btnTailorTalisman_Click);
+            this.btnTailorTalisman.MouseHover += new System.EventHandler(this.btnTailorTalisman_MouseHover);
+            // 
+            // btnBlacksmithyTalisman
+            // 
+            this.btnBlacksmithyTalisman.Location = new System.Drawing.Point(403, 85);
+            this.btnBlacksmithyTalisman.Name = "btnBlacksmithyTalisman";
+            this.btnBlacksmithyTalisman.Size = new System.Drawing.Size(118, 24);
+            this.btnBlacksmithyTalisman.TabIndex = 18;
+            this.btnBlacksmithyTalisman.Text = "Blackmithy talisman";
+            this.btnBlacksmithyTalisman.UseVisualStyleBackColor = true;
+            this.btnBlacksmithyTalisman.Click += new System.EventHandler(this.btnBlacksmithyTalisman_Click);
+            this.btnBlacksmithyTalisman.MouseHover += new System.EventHandler(this.btnBlacksmithyTalisman_MouseHover);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(259, 69);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(67, 17);
+            this.label1.TabIndex = 19;
+            this.label1.Text = "Selected:";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(400, 69);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(67, 17);
+            this.label2.TabIndex = 20;
+            this.label2.Text = "Selected:";
+            // 
+            // lblTailoringTalisman
+            // 
+            this.lblTailoringTalisman.AutoSize = true;
+            this.lblTailoringTalisman.Location = new System.Drawing.Point(306, 69);
+            this.lblTailoringTalisman.Name = "lblTailoringTalisman";
+            this.lblTailoringTalisman.Size = new System.Drawing.Size(29, 17);
+            this.lblTailoringTalisman.TabIndex = 21;
+            this.lblTailoringTalisman.Text = "NO";
+            // 
+            // lblBlackSmithyTalisman
+            // 
+            this.lblBlackSmithyTalisman.AutoSize = true;
+            this.lblBlackSmithyTalisman.Location = new System.Drawing.Point(447, 69);
+            this.lblBlackSmithyTalisman.Name = "lblBlackSmithyTalisman";
+            this.lblBlackSmithyTalisman.Size = new System.Drawing.Size(29, 17);
+            this.lblBlackSmithyTalisman.TabIndex = 22;
+            this.lblBlackSmithyTalisman.Text = "NO";
+            // 
             // SSBodsFiller
             // 
-            this.ClientSize = new System.Drawing.Size(447, 318);
+            this.ClientSize = new System.Drawing.Size(566, 318);
+            this.Controls.Add(this.lblBlackSmithyTalisman);
+            this.Controls.Add(this.lblTailoringTalisman);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.btnBlacksmithyTalisman);
+            this.Controls.Add(this.btnTailorTalisman);
             this.Controls.Add(this.btnSmelter);
             this.Controls.Add(this.btnCutter);
             this.Controls.Add(this.pictureBox);
@@ -510,6 +599,106 @@ namespace BODS
                 Logger.Log("Target is not a container");
             }
         }
+        private void btnTailorTalisman_Click(object sender, EventArgs e)
+        {
+            int talismanSerial = new Target().PromptTarget("Select Tailor Talisman");
+            if (talismanSerial == 0)
+            {
+                Logger.MessageBox("Wrong selection for Tailor Talisman", Logger.MESSAGEBOX_TYPE.ERROR);
+                return;
+            }
+
+            Item talisman = Items.FindBySerial(talismanSerial);
+            if (talisman != null)
+            {
+                List<int> validTalismans = new List<int>() {
+                    0x2F59, // Snake
+                    0x2F58, // Shield
+                    0x2F5B, // Y
+                    0x2F5A, // ? 
+                };
+
+                if (!validTalismans.Contains(talisman.ItemID))
+                {
+                    Logger.MessageBox("Not a valid Talisman!", Logger.MESSAGEBOX_TYPE.ERROR);
+                    return;
+                }
+
+                bool isTailor = false;
+                foreach (var prop in talisman.Properties)
+                {
+                    if (prop.ToString().ToLower().Contains("tailoring"))
+                    {
+                        isTailor = true;
+                        break;
+                    }
+                }
+
+                if (!isTailor)
+                {
+                    Logger.MessageBox("Not a valid Tailoring Talisman!", Logger.MESSAGEBOX_TYPE.ERROR);
+                    return;
+                }
+
+                talismanTailoringSerial = talismanSerial;
+                StoredData.StoreData(talismanTailoringSerial, json_tailor_talisman, false);
+                lblTailoringTalisman.Text = "YES";
+            }
+        }
+        private void btnBlacksmithyTalisman_Click(object sender, EventArgs e)
+        {
+            int talismanSerial = new Target().PromptTarget("Select Blacksmithy Talisman");
+            if (talismanSerial == 0)
+            {
+                Logger.MessageBox("Wrong selection for Blacksmithy Talisman", Logger.MESSAGEBOX_TYPE.ERROR);
+                return;
+            }
+
+            Item talisman = Items.FindBySerial(talismanSerial);
+            if (talisman != null)
+            {
+                List<int> validTalismans = new List<int>() {
+                    0x2F59, // Snake
+                    0x2F58, // Shield
+                    0x2F5B, // Y
+                    0x2F5A, // ? 
+                };
+
+                if (!validTalismans.Contains(talisman.ItemID))
+                {
+                    Logger.MessageBox("Not a valid Talisman!", Logger.MESSAGEBOX_TYPE.ERROR);
+                    return;
+                }
+
+                bool isBlackSmith = false;
+                foreach (var prop in talisman.Properties)
+                {
+                    if (prop.ToString().ToLower().Contains("blacksmithing"))
+                    {
+                        isBlackSmith = true;
+                        break;
+                    }
+                }
+
+                if (!isBlackSmith)
+                {
+                    Logger.MessageBox("Not a valid Blacksmithing Talisman!", Logger.MESSAGEBOX_TYPE.ERROR);
+                    return;
+                }
+
+                talismanBlackSmithSerial = talismanSerial;
+                StoredData.StoreData(talismanBlackSmithSerial, json_blacksmith_talisman, false);
+                lblBlackSmithyTalisman.Text = "YES";
+            }
+        }
+        private void btnTailorTalisman_MouseHover(object sender, EventArgs e)
+        {
+            lblStatus.Text = "Target a Tailoring talisman to be equipped";
+        }
+        private void btnBlacksmithyTalisman_MouseHover(object sender, EventArgs e)
+        {
+            lblStatus.Text = "Target a Blacksmithing talisman to be equipped";
+        }
         private void btnAddSingle_MouseHover(object sender, EventArgs e)
         {
             lblStatus.Text = "Target one bulk of orders deed";
@@ -534,6 +723,8 @@ namespace BODS
         {
             lblStatus.Text = "Target a | Container | Book of BODs | Player | for store filled BODs";
         }
+
+
         private void btnStart_Click(object sender, EventArgs e)
         {
             SetEnabledAllButtons(false);
@@ -595,6 +786,7 @@ namespace BODS
                 if (bod.Craftables.Count > 0) ShowBodCraftableInfo(bod.Craftables[0].ItemToDo);
             }
         }
+
         #endregion
 
         private bool SmeltItems(List<Item> itemsToBeSmelt, uint requiredPause, List<int> toolList)
