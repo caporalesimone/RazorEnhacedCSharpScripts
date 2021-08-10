@@ -2,15 +2,17 @@
 
 //
 // SSBodsFiller
+//  This is an automation tool for fill Tailoring and Blacksmith BODs
+//  It has been developed and tested on Demise Server.
+//  It can run also on other servers but BodCraftableDatabase.cs file must be updated correctly
 // 
-// Developed by SimonSoft on Demise Server - 2021
+// Developed by SimonSoft - 2021
 //
 
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Threading;
 using System.Windows.Forms;
 using RazorEnhanced;
 using Scripts.Libs;
