@@ -723,8 +723,6 @@ namespace BODS
         {
             lblStatus.Text = "Target a | Container | Book of BODs | Player | for store filled BODs";
         }
-
-
         private void btnStart_Click(object sender, EventArgs e)
         {
             SetEnabledAllButtons(false);
@@ -1091,7 +1089,7 @@ namespace BODS
             }
             return bRet;
         }
-        bool CheckIfGumpHasCorrectMaterialSelected(string material)
+        private bool CheckIfGumpHasCorrectMaterialSelected(string material)
         {
             // Checking if material in gump is correctly selected
             string craftableResource = material.ToLower();
@@ -1111,7 +1109,7 @@ namespace BODS
             }
             return isMaterialSelected;
         }
-        bool CraftItem(BodCraftable todo, int quantity, bool isExceptional)
+        private bool CraftItem(BodCraftable todo, int quantity, bool isExceptional)
         {
             foreach (var prop in Player.Backpack.Properties)
             {
@@ -1188,7 +1186,7 @@ namespace BODS
 
             return true;
         }
-        bool CraftBodItems(Bod bod)
+        private bool CraftBodItems(Bod bod)
         {
             if (bod.Size != Bod.BodSizeEnum.SMALL) return false; // Just to be sure is not a Large Bod
 
@@ -1242,7 +1240,7 @@ namespace BODS
             Gumps.CloseGump(Gumps.CurrentGump());
             return true;
         }
-        bool FillTheBod(Bod bod)
+        private bool FillTheBod(Bod bod)
         {
             if (bod.IsFilled) { return true; }
 
@@ -1300,7 +1298,7 @@ namespace BODS
 
             return true;
         }
-        bool StoreTheBod(Bod bod)
+        private bool StoreTheBod(Bod bod)
         {
             if (secureFilledBodContainerSerial <= 0)
             {
@@ -1325,6 +1323,73 @@ namespace BODS
             }
 
             return true;
+        }
+        private bool EquipTalisman(Bod bod)
+        {
+            if (bod.IsFilled) return true;
+
+            BodCraftableDatabase.Skill skill = bod.Craftables[0].ItemToDo.RequiredSkill;
+
+            int serial = 0;
+
+            switch (skill)
+            {
+                case BodCraftableDatabase.Skill.TAILORING:
+                    if (talismanTailoringSerial == 0) return true;
+                    serial = talismanTailoringSerial;
+                    break;
+                case BodCraftableDatabase.Skill.BLACKSMITHY:
+                    if (talismanBlackSmithSerial == 0) return true;
+                    serial = talismanBlackSmithSerial;
+                    break;
+                case BodCraftableDatabase.Skill.UNKNOWN:
+                    Logger.Log("Unknown skill for equip talisman");
+                    return false;
+                default:
+                    break;
+            }
+
+            Item talisman = Items.FindBySerial(serial);
+            if (talisman == null)
+            {
+                Logger.Log("Warning - Talisman not found");
+                return false;
+            }
+
+            // Checking if talisman is already equipped or if the equipped is wrong
+            Item layerTalisman = Player.GetItemOnLayer("Talisman");
+            if (layerTalisman == null)
+            {
+                Player.EquipItem(talisman);
+                Common.Pause(delayDragItem);
+            } 
+            else
+            {
+                if (layerTalisman.Serial != talisman.Serial)
+                {
+                    Player.UnEquipItemByLayer("Talisman");
+                    Common.Pause(delayDragItem);
+                    Player.EquipItem(talisman);
+                    Common.Pause(delayDragItem);
+                }
+            }
+
+            return true;
+        }
+
+        private void UnEquipTalisman()
+        {
+            Item talisman = Player.GetItemOnLayer("Talisman");
+
+            if (talisman == null) return;
+
+            if (talisman.Serial == talismanTailoringSerial || talisman.Serial == talismanBlackSmithSerial)
+            {
+                Player.UnEquipItemByLayer("Talisman");
+                Common.Pause(delayDragItem);
+                Items.Move(talisman, secureResourceContainerSerial, 1);
+                Common.Pause(delayDragItem);
+            }
         }
 
         private void StartCrafting()
@@ -1360,6 +1425,12 @@ namespace BODS
                 Bod bod = (Bod)lstBODs.Items[0];
                 lstBODs.SelectedIndex = 0;
 
+                if (!EquipTalisman(bod))
+                {
+                    Logger.MessageBox("Unable to equip talisman", Logger.MESSAGEBOX_TYPE.ERROR);
+                    break;
+                }
+
                 var status = CraftBodItems(bod);
                 if (status == false)
                 {
@@ -1373,6 +1444,8 @@ namespace BODS
                     lstBODs.Items.RemoveAt(0);
                 }
             }
+
+            UnEquipTalisman();
 
             progressBar.Visible = false;
             lblStatus.Text = "Done";
