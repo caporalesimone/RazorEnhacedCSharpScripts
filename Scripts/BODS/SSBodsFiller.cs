@@ -17,6 +17,7 @@ using Scripts.Libs;
 
 //#import <bod_libs/Bod.cs>
 //#import <bod_libs/BodCraftableDatabase.cs>
+//#import <../Libs/common.cs>
 //#import <../Libs/logger.cs>
 //#import <../Libs/stored_data.cs>
 
@@ -60,19 +61,6 @@ namespace BODS
         private Button btnSmelter;
         private int secureResourceContainerSerial = 0;
 
-        static void Pause(uint milliseconds)
-        {
-            for (int i = 0; i < milliseconds; i += 2)
-            {
-                Application.DoEvents();
-                Thread.Sleep(2);
-            }
-        }
-        public T test<T>()
-        {
-            object a = 0;
-            return (T)a;
-        }
         public SSBodsFiller()
         {
             InitializeComponent();
@@ -87,8 +75,6 @@ namespace BODS
                     lblSecureContainer.Text = target.Properties[0].ToString();
                 }
             }
-            //pictureBox.Image = Items.GetImage(0x0F9D);
-            //Pause(100);
         }
         public void Run()
         {
@@ -362,8 +348,8 @@ namespace BODS
             btnAddAll.Enabled = false;
             lstBODs.Items.Clear();
 
-            List<Item> foundItems = FindItems(0x2258, Player.Backpack, false, true, false); // BOD
-            Pause(100);
+            List<Item> foundItems = Common.FindItems(0x2258, Player.Backpack, false, true, false); // BOD
+            Common.Pause(100);
             foreach (Item itm in foundItems)
             {
                 Bod bod = new Bod(itm);
@@ -568,13 +554,13 @@ namespace BODS
             if (Gumps.HasGump())
             {
                 Gumps.CloseGump(Gumps.CurrentGump());
-                Pause(500);
+                Common.Pause(500);
             }
 
             int serial = new Target().PromptTarget("Select item to smelt");
             Item targetted = Items.FindBySerial(serial);
-            List<Item> foundItems = FindItems(targetted.ItemID, Player.Backpack, false, false, false);
-            Pause(100);
+            List<Item> foundItems = Common.FindItems(targetted.ItemID, Player.Backpack, false, false, false);
+            Common.Pause(100);
             if (foundItems != null)
             {
                 SmeltItems(foundItems, 600, BodCraftableDatabase.DestroyToolFromMaterial("iron"));
@@ -585,13 +571,13 @@ namespace BODS
             if (Gumps.HasGump())
             {
                 Gumps.CloseGump(Gumps.CurrentGump());
-                Pause(500);
+                Common.Pause(500);
             }
 
             int serial = new Target().PromptTarget("Select item to cut");
             Item targetted = Items.FindBySerial(serial);
-            List<Item> foundItems = FindItems(targetted.ItemID, Player.Backpack, false, false, false);
-            Pause(100);
+            List<Item> foundItems = Common.FindItems(targetted.ItemID, Player.Backpack, false, false, false);
+            Common.Pause(100);
             if (foundItems != null)
             {
                 CutItems(foundItems, 600, BodCraftableDatabase.DestroyToolFromMaterial("cloth"));
@@ -641,31 +627,31 @@ namespace BODS
                 if (Gumps.HasGump())
                 {
                     Gumps.CloseGump(Gumps.CurrentGump());
-                    Pause(100);
+                    Common.Pause(100);
                 }
                 Items.UseItem(tool);
                 while (!Gumps.HasGump())
                 {
-                    Pause(10);
+                    Common.Pause(10);
                 }
                 var gump = Gumps.CurrentGump();
                 Gumps.SendAction(gump, 14); // Smelt Action
-                Pause(requiredPause);
+                Common.Pause(requiredPause);
                 Target.WaitForTarget(delayGump);
                 Target.TargetExecute(toBeSmet);
                 while (!Gumps.HasGump())
                 {
-                    Pause(10);
+                    Common.Pause(10);
                 }
                 Gumps.CloseGump(gump);
-                Pause(300);
+                Common.Pause(300);
             }
-            Pause(300); // Not necessary but for safety I add some sleep
+            Common.Pause(300); // Not necessary but for safety I add some sleep
             return true;
         }
         private bool CutItems(List<Item> itemsToBeCut, uint requiredPause, List<int> toolList)
         {
-            List<Item> tools = FindItems(toolList, Player.Backpack, false, false, false);
+            List<Item> tools = Common.FindItems(toolList, Player.Backpack, false, false, false);
             if (tools == null || tools.Count <= 0)
             {
                 Logger.MessageBox("Unable to find the tool for recycle item", Logger.MESSAGEBOX_TYPE.ERROR);
@@ -677,7 +663,7 @@ namespace BODS
                 Items.UseItem(tools[0]);
                 Target.WaitForTarget(delayGump);
                 Target.TargetExecute(item.Serial);
-                Pause(requiredPause);
+                Common.Pause(requiredPause);
             }
 
             return true;
@@ -686,7 +672,7 @@ namespace BODS
         {
             pictureBox.Image = Items.GetImage(craftable.GraphicID);
             pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
-            Pause(100);
+            Common.Pause(100);
         }
         private void SetEnabledButtonsSelectContainers(bool enabled)
         {
@@ -721,87 +707,6 @@ namespace BODS
             btnStop.Enabled = enabled;
         }
 
-        // Returns a list of all items with itemID in list of the itemIDs, looking recursiverly inside a container
-        private List<Item> FindItems(List<int> itemIDs, Item container, bool exceptionalOnly = false, bool recursive = true, bool stopAtFirst = false)
-        {
-            List<Item> itemList = new List<Item>();
-
-            foreach (Item item in container.Contains)
-            {
-                if (itemIDs.Contains(item.ItemID))
-                {
-                    //Items.WaitForProps(item.Serial, delayWaitForProprs);
-                    if (exceptionalOnly == false)
-                    {
-                        itemList.Add(item);
-                        if (stopAtFirst) { return itemList; }
-                    }
-                    else
-                    {
-                        foreach (Property prop in item.Properties)
-                        {
-                            if (prop.ToString().ToLower().Contains("exceptional"))
-                            {
-                                itemList.Add(item);
-                                if (stopAtFirst) { return itemList; }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (recursive)
-            {
-                List<Item> subcontainers = container.Contains.Select(sublist => sublist).Where(item => item.IsContainer).ToList();
-
-                foreach (Item bag in subcontainers)
-                {
-                    // If is a Book of BOD skip
-                    if (bag.ItemID == 0x2259) { continue; }
-                    Items.UseItem(bag);
-                    Pause(delayUseItem);
-                    List<Item> itemInSubContainer = FindItems(itemIDs, bag, exceptionalOnly, true, stopAtFirst);
-                    itemList.AddRange(itemInSubContainer);
-                    if (stopAtFirst) { return itemList; }
-                }
-            }
-
-            return itemList;
-        }
-
-        // Wrapper of FindItems with only one itemID as input
-        private List<Item> FindItems(int itemID, Item container, bool exceptionalOnly = false, bool recursive = true, bool stopAtFirst = false)
-        {
-            return FindItems(new List<int>() { itemID }, container, exceptionalOnly, recursive, stopAtFirst);
-        }
-
-        // Returns a list of all items with itemID that are not exceptional inside player backpack. It's not recursive
-        private List<Item> FindItemsNotExceptionalInBackpack(int itemID)
-        {
-            List<Item> itemList = new List<Item>();
-
-            foreach (Item item in Player.Backpack.Contains)
-            {
-                if (item.ItemID == itemID)
-                {
-                    //Items.WaitForProps(item.Serial, delayWaitForProprs);
-                    bool isExceptional = false;
-                    foreach (Property prop in item.Properties)
-                    {
-                        if (prop.ToString().ToLower().Contains("exceptional"))
-                        {
-                            isExceptional = true;
-                            break;
-                        }
-                    }
-
-                    if (!isExceptional) { itemList.Add(item); }
-                }
-            }
-
-            return itemList;
-        }
-
         // Adds a bot to the list if it considered a valid BOD
         private bool AddBODtoListIfValid(Bod bod)
         {
@@ -823,7 +728,6 @@ namespace BODS
 
             return added;
         }
-
         private bool CheckBeforeCrafting()
         {
             bool accessible = false;
@@ -883,7 +787,7 @@ namespace BODS
             foreach (int id in itemID)
             {
                 // Checking 1st in player backpack
-                var items = FindItems(id, Player.Backpack, false, true, true);
+                var items = Common.FindItems(id, Player.Backpack, false, true, true);
                 if (items != null && items.Count > 0)
                 {
                     return items[0].Serial;
@@ -898,7 +802,7 @@ namespace BODS
                     {
                         // Drag item into Player Backpack
                         Items.Move(item.Serial, Player.Backpack.Serial, 0);
-                        Pause(delayDragItem);
+                        Common.Pause(delayDragItem);
                         return item.Serial;
                     }
                 }
@@ -939,7 +843,7 @@ namespace BODS
                 Logger.Log("Doing restock");
                 // Drag item into Player Backpack
                 Items.Move(itm, Player.Backpack.Serial, qty);
-                Pause(delayDragItem);
+                Common.Pause(delayDragItem);
             }
 
             return true;
@@ -954,31 +858,20 @@ namespace BODS
                     if (itm != null)
                     {
                         Items.Move(itm, secureResourceContainerSerial, itm.Amount);
-                        Pause(delayDragItem);
+                        Common.Pause(delayDragItem);
                     }
                 }
             }
 
         }
-        private bool FindCreateExceptionalInGump()
-        {
-            foreach (string line in Gumps.LastGumpGetLineList())
-            {
-                if (line.ToLower().Contains("you create an exceptional quality item"))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
         private int CountCraftedItems(int itemID, bool isCountExceptionalOnly)
         {
-            List<Item> crafted = FindItems(itemID, Player.Backpack, isCountExceptionalOnly, false, false);
+            List<Item> crafted = Common.FindItems(itemID, Player.Backpack, isCountExceptionalOnly, false, false);
             return crafted.Count;
         }
         private bool RecycleNotExceptionalItems(BodCraftable craftable)
         {
-            List<Item> toBeRecycled = FindItemsNotExceptionalInBackpack(craftable.GraphicID);
+            List<Item> toBeRecycled = Common.FindItemsNotExceptionalInBackpack(craftable.GraphicID);
             if (toBeRecycled == null || toBeRecycled.Count <= 0)
             {
                 // No item found. Probabily a fail in craft
@@ -1048,7 +941,7 @@ namespace BODS
                 Items.UseItem(tool);
                 while (!Gumps.HasGump())
                 {
-                    Pause(10);
+                    Common.Pause(10);
                 }
                 var gump = Gumps.CurrentGump();
 
@@ -1058,7 +951,7 @@ namespace BODS
                     Gumps.WaitForGump(gump, delayGump);
                     Gumps.SendAction(gump, BodCraftableDatabase.Instance.GumpButtonForMaterial(todo.ResourceList[0].material));
                     Gumps.WaitForGump(gump, delayGump);
-                    Pause(300);
+                    Common.Pause(300);
                 }
 
                 Journal.Clear();
@@ -1071,7 +964,7 @@ namespace BODS
                 while (!Gumps.HasGump() && safeexit > 0)
                 {
                     safeexit--;
-                    Pause(100);
+                    Common.Pause(100);
                     if (Journal.Search("have worn out your"))
                     {
                         break;
@@ -1080,14 +973,14 @@ namespace BODS
                 if (safeexit <= 0) return false; // Something gone wrong
 
                 // TODO: Change this pause counting items in backpack instead
-                Pause(400); // Need to wait for item to appear in backpack
+                Common.Pause(400); // Need to wait for item to appear in backpack
 
-                if (isExceptional && !FindCreateExceptionalInGump())
+                if (isExceptional && !Common.FindTextInLastGump("you create an exceptional quality item"))
                 {
                     Logger.Log("Crafted a non exceptional item. Try to recycle it");
                     bool done = RecycleNotExceptionalItems(todo);
                     if (!done) return false;
-                    Pause(500);
+                    Common.Pause(500);
                 }
 
                 progressBar.Value++;
@@ -1119,7 +1012,7 @@ namespace BODS
             bool done = false;
             while (!done && !forcedStop)
             {
-                Pause(10); // Safety Sleep
+                Common.Pause(10); // Safety Sleep
 
                 int crafted = CountCraftedItems(todo.GraphicID, bod.IsExceptional);
                 if (crafted + amountDone >= bod.AmountMax)
@@ -1159,11 +1052,11 @@ namespace BODS
         {
             if (bod.IsFilled) { return true; }
 
-            Pause(1000); // Just a safe wait
+            Common.Pause(1000); // Just a safe wait
 
             int qtyInBod = bod.Craftables[0].qty;
 
-            List<Item> crafted = FindItems(bod.Craftables[0].ItemToDo.GraphicID, Player.Backpack, bod.IsExceptional, false);
+            List<Item> crafted = Common.FindItems(bod.Craftables[0].ItemToDo.GraphicID, Player.Backpack, bod.IsExceptional, false);
 
             if (crafted == null)
             {
@@ -1178,7 +1071,7 @@ namespace BODS
             Items.UseItem(bod.Serial);
             while (!Gumps.HasGump())
             {
-                Pause(10);
+                Common.Pause(10);
             }
             var gump = Gumps.CurrentGump();
 
@@ -1199,7 +1092,7 @@ namespace BODS
                 Target.WaitForTarget(delayGump);
             }
             Target.TargetExecute(crafted[numOfTargets - 1].Serial);
-            Pause(500); // Safe sleep
+            Common.Pause(500); // Safe sleep
 
             Gumps.SendAction(gump, 1); // Close the fill bod gump
 
@@ -1223,9 +1116,9 @@ namespace BODS
             Item bodItem = Items.FindBySerial(bod.Serial);
             if (bodItem != null)
             {
-                Pause(500); // Safe sleep
+                Common.Pause(500); // Safe sleep
                 Items.Move(bod.Serial, secureFilledBodContainerSerial, 1);
-                Pause(500);
+                Common.Pause(500);
                 if (Gumps.HasGump())
                 {
                     Gumps.CloseGump(Gumps.CurrentGump());
@@ -1263,7 +1156,7 @@ namespace BODS
             if (secureResourceContainerSerial != Player.Backpack.Serial)
             {
                 Items.UseItem(secureResourceContainerSerial);
-                Pause(delayUseItem);
+                Common.Pause(delayUseItem);
             }
 
             // I craft always the first of the list so I don't use any counter
