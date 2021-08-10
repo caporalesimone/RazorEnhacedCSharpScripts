@@ -1,10 +1,13 @@
-﻿using System;
+//C#
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-//using Utils;
-//-#import "C:\Users\simon\Desktop\RazorEnhanced\bin\Win32\Debug\Scripts\CSharp\Scripts\Libs\stored_data.cs"
+using Scripts.Libs;
+
+//-#forcerelease
+//#import <..\Scripts\Libs\conversions.cs>
 
 namespace RazorEnhanced
 {
@@ -12,7 +15,19 @@ namespace RazorEnhanced
     {
         public void Run()
         {
-            Misc.SendMessage("Run");
+            double cnt = 0;
+
+            var start = DateTime.Now;
+            for (int i = 0; i < 30000000; i++)
+            {
+                cnt++;
+                if (cnt / 2 == 0) cnt = 2;
+            }
+            Misc.SendMessage(DateTime.Now - start);
+
+            // Testing Conversion Function
+            (int x, int y) = Conversions.SextantToXY(84, 6, 'S', 152, 0, 'E');
+            Misc.SendMessage(x.ToString() + "," + y.ToString());
         }
     }
 }

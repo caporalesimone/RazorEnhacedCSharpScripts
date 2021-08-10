@@ -22,15 +22,14 @@ There are many way to develop a C# script but the most comfortable (for me) is t
 1. Clone this repo somewhere in your pc
 2. Clone RazorEnhanced [source code](https://github.com/RazorEnhanced/RazorEnhanced) in an other folder
 3. Compile it in debug with Visual Studio 
-4. Locate the folder _bin\Win32\Debug\Scripts_, and make is as a junction (symbolic link) to this script repo (Point 1). Commands:
-      1. `rmdir Scripts /S /Q`
-      2. `mklink /J Scripts <full path of this cloned repo)`
+4. Locate the folder _bin\Win32\Debug\Scripts_, and make inside it a junction (symbolic link) to this script repo (ref. #1). Commands:
+      * `mklink /J CSharp <full path of this cloned repo)`
 5. Now open _Scripts.sln_ file from _bin\Win32\Debug\Scripts_ and never from the folder where you cloned the repo
 6. Mantain RazorEnhanced source code updated `git pull` to be sure to have the latest features 
 
 Note: 
 1. You don't need to run the compiled version of Razor but you can use the installed and include scripts from there
-2. If you want run your builded copy of RE, before delete scripts foder, backup the file _Assemblies.cfg_ and place it again into the junction Scripts folder
+2. If you want run your builded copy of RE, consider that the build procedure deletes the Scripts forlder. The better thing to do is create a batch file that generates the junction and run it before run UO.
 
 ## Debug
 
@@ -53,6 +52,12 @@ So be careful to have all required file in the correct path before run the scrip
 An important file to make scripts work is _Assemblies.cfg_. It contains the list of all the DLLs that are required to run your scripts.
 If you want to use a custom DLL place it in RazorEnhanced main folder and add it's name into this file. You can also add the full path using quotes
 
+
+## Contributes
+
+This is the list of great guys that contributes to this repository
+
+* Dynamic aka FunkyPants
 
 ## Links
 

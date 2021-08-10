@@ -70,6 +70,7 @@
     </Compile>
     <Compile Include="Scripts\Libs\common.cs" />
     <Compile Include="Scripts\Libs\logger.cs" />
+    <Compile Include="Scripts\Libs\conversions.cs" />
     <Compile Include="Scripts\Libs\stored_data.cs" />
     <Compile Include="Scripts\Libs\send_mail.cs" />
     <Compile Include="Experimental\Mining\Mining_CUO_SurveyedVeinCreator.cs" />
@@ -77,6 +78,9 @@
     <Compile Include="Experimental\Mining\Mining_WorldVeinCreator.cs" />
     <Compile Include="Scripts\IDOC\idoc_monitor.cs" />
     <Compile Include="Scripts\IDOC\idoc_finder.cs" />
+    <Compile Include="Scripts\Trainers\MageryTrainer.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Test\import\TestFolder\Test_Include3.cs" />
     <Compile Include="Test\import\TestFolder\Test_Include2.cs" />
     <Compile Include="Test\import\TestFolder\Test_Include1.cs" />
@@ -117,6 +121,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Scripts\Items\BulkItemsInspector.resx">
       <DependentUpon>BulkItemsInspector.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Scripts\Trainers\MageryTrainer.resx">
+      <DependentUpon>MageryTrainer.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Templates\Form_Inherit.resx">
       <DependentUpon>Form_Inherit.cs</DependentUpon>
