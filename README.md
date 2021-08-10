@@ -43,11 +43,23 @@ Debug with Visual Studio is very simple:
 6. Place your breakpoints
 7. Run the script on RazorEnhanced and enjoy your breakpoint
 
-## Notes
+## Special RazorEnhanced C# scripting features
+C# scripting supports a list of directives that can enable extra features.
+All those directives MUST be added before the keyword _namespace_.
 
-Some C# files uses classes written in other C# files and RazorEnhanced implements a "Not C# standard way" to link files using a special directive
-`//#import <relative path of the required file>` or `//#import "absolute path of the C# file`
+### _//#import_ directive
+Some C# files uses classes written in other C# files and RazorEnhanced implements a "custom C# way" to link files using a special directive
+* `//#import <relative path of the imported C# file>` 
+* `//#import "absolute path of the imported C# file`
+
 So be careful to have all required file in the correct path before run the script.
+
+### _//#forcerelease_ directive
+If you want to do huge amount of math or other time consuming operations, using this directive, the script will be compiled in _RELEASE_ instead of _DEBUG_ having it run more faster.
+_RELEASE_ is not debuggable.
+* `//#forcerelease`
+
+## Notes
 
 An important file to make scripts work is _Assemblies.cfg_. It contains the list of all the DLLs that are required to run your scripts.
 If you want to use a custom DLL place it in RazorEnhanced main folder and add it's name into this file. You can also add the full path using quotes
