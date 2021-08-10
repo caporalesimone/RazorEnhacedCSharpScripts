@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using RazorEnhanced;
 
 namespace Scripts
 {
