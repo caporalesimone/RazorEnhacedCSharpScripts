@@ -821,12 +821,10 @@ namespace BODS
                     Gumps.CloseGump(Gumps.CurrentGump());
                     Common.Pause(100);
                 }
-                Items.UseItem(tool);
-                while (!Gumps.HasGump())
-                {
-                    Common.Pause(10);
-                }
+
+                Common.UseItemWithGump(tool, delayGump, 3);
                 var gump = Gumps.CurrentGump();
+
                 Gumps.SendAction(gump, 14); // Smelt Action
                 Common.Pause(requiredPause);
                 Target.WaitForTarget(delayGump);
@@ -1091,6 +1089,9 @@ namespace BODS
         }
         private bool CheckIfGumpHasCorrectMaterialSelected(string material)
         {
+            // If material is cloth I don't need to do this check
+            if (material.ToLower().Contains("cloth")) return true;
+
             // Checking if material in gump is correctly selected
             string craftableResource = material.ToLower();
             bool isMaterialSelected = false;
@@ -1130,11 +1131,8 @@ namespace BODS
                     return false;
                 }
 
-                Items.UseItem(tool);
-                while (!Gumps.HasGump())
-                {
-                    Common.Pause(10);
-                }
+                Common.Pause(50);
+                Common.UseItemWithGump(tool, delayGump, 3);
                 var gump = Gumps.CurrentGump();
 
                 if (!CheckIfGumpHasCorrectMaterialSelected(todo.ResourceList[0].material))
@@ -1260,11 +1258,7 @@ namespace BODS
                 return true;
             }
 
-            Items.UseItem(bod.Serial);
-            while (!Gumps.HasGump())
-            {
-                Common.Pause(10);
-            }
+            Common.UseItemWithGump(bod.Serial, delayGump, 3);
             var gump = Gumps.CurrentGump();
 
             // For fill a bod I need to count how much items i have to target

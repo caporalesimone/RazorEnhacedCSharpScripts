@@ -152,5 +152,30 @@ namespace Scripts.Libs
             return itemList;
         }
 
+
+        public static bool UseItemWithGump(int itemSerial, int waitForGumpMs, int maxRetry)
+        {
+            Items.UseItem(itemSerial);
+
+            int time_counter = 0;
+            int safe_counter = maxRetry;
+            while (!Gumps.HasGump())
+            {
+                Common.Pause(1);
+                if (time_counter++ > waitForGumpMs)
+                {
+                    // If wait is elapsed I try again to use the item
+                    Items.UseItem(itemSerial);
+                    time_counter = 0;
+
+                    // Untill the counter has reached 0
+                    if (safe_counter-- <= 0) return false;
+                }
+            }
+
+            return true;
+        }
+
+
     }
 }
