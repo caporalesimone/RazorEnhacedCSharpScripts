@@ -954,7 +954,7 @@ namespace BODS
                 Item filled = Items.FindBySerial(secureFilledBodContainerSerial);
                 if (filled != null)
                 {
-                    if (filled.RootContainer == Player.Serial)
+                    if (filled.RootContainer == Player.Backpack.Serial)
                     {
                         accessible = true;
                     }
