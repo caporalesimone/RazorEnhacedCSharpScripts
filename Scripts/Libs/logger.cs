@@ -60,10 +60,22 @@ namespace Scripts.Libs
             Misc.SendMessage(DateTime.Now.TimeOfDay + message.ToString(), (int)color);
         }
 
-        public static void MessageBox(string message, MESSAGEBOX_TYPE type)
+        public static void MessageBox(string message, MESSAGEBOX_TYPE type, bool blocking = true)
         {
-            // Displays the MessageBox.
-            System.Windows.Forms.MessageBox.Show(message, "Razor Script", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            if(blocking)
+            {                
+                // Displays the MessageBox.
+                System.Windows.Forms.MessageBox.Show(message, "Razor Script", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            else
+            {   
+                Task.Run(() => 
+                {
+                    // Displays the MessageBox.
+                    System.Windows.Forms.MessageBox.Show(message, "Razor Script", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                });
+            }
+                
         }
     }
 }
