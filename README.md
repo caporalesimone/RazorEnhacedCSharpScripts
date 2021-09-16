@@ -30,6 +30,10 @@ There are many way to develop a C# script but the most comfortable (for me) is t
 Note: 
 1. You don't need to run the compiled version of Razor but you can use the installed and include scripts from there
 2. If you want run your builded copy of RE, consider that the build procedure deletes the Scripts forlder. The better thing to do is create a batch file that generates the junction and run it before run UO.
+3. Junktions works only on NTFS
+4. Use Command Prompt (cmd) and not Power Shell
+5. Remember to add quotes "" if your path contains a space
+6. Be carefult to not have too much long paths because windows limitations
 
 ## Debug
 
