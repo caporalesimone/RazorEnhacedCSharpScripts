@@ -22,7 +22,7 @@ There are many way to develop a C# script but the most comfortable (for me) is t
 1. Clone this repo somewhere in your pc
 2. Clone RazorEnhanced [source code](https://github.com/RazorEnhanced/RazorEnhanced) in an other folder
 3. Compile it in debug with Visual Studio 
-4. Locate the folder _bin\Win32\Debug\Scripts_, and make inside it a junction (symbolic link) to this script repo (ref. #1). Commands:
+4. Locate the folder _bin\Win32\Debug\Scripts_, and make inside it a junction (symbolic links works only on NTFS not ExFAT) to this script repo (ref. #1). Execute this command in CMD (not PowerShell):
       * `mklink /J CSharp <full path of this cloned repo)`
 5. Now open _Scripts.sln_ file from _bin\Win32\Debug\Scripts_ and never from the folder where you cloned the repo
 6. Mantain RazorEnhanced source code updated `git pull` to be sure to have the latest features 
