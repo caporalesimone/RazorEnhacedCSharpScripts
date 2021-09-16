@@ -33,7 +33,7 @@ Note:
 3. Junktions works only on NTFS
 4. Use Command Prompt (cmd) and not Power Shell
 5. Remember to add quotes "" if your path contains a space
-6. Be carefult to not have too much long paths because windows limitations
+6. Be careful to not have too much long paths because Windows limitations
 
 ## Debug
 
