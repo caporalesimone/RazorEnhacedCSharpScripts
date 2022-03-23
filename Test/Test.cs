@@ -17,6 +17,14 @@ namespace RazorEnhanced
         {
             double cnt = 0;
 
+            Misc.SendMessage("Please type \"test\"");
+            Journal j = new Journal();
+            j.Clear();
+            j.WaitJournal("test", 5000);
+            bool a = j.Search("test");
+            Misc.SendMessage(a.ToString());
+
+
             var start = DateTime.Now;
             for (int i = 0; i < 30000000; i++)
             {
