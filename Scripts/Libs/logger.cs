@@ -68,8 +68,8 @@ namespace Scripts.Libs
                 System.Windows.Forms.MessageBox.Show(message, "Razor Script", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             else
-            {   
-                Task.Run(() => 
+            {
+                System.Threading.Tasks.Task.Run(() => 
                 {
                     // Displays the MessageBox.
                     System.Windows.Forms.MessageBox.Show(message, "Razor Script", MessageBoxButtons.OK, MessageBoxIcon.Error);
