@@ -1,4 +1,4 @@
-﻿//C#
+//C#
 
 //
 // Bulk Item Inspector
@@ -218,7 +218,7 @@ namespace RazorEnhanced
                 { "hit lower defense", new Tuple<string, System.Type>("Hit Lower Def.", typeof(int)) },
                 { "hit lower attack", new Tuple<string, System.Type>("Hit Lower Atk.", typeof(int)) },
 
-                { "swing speed increase", new Tuple<string, System.Type>("Swing Speed Inc.", typeof(int)) },
+                { "swing speed increase", new Tuple<string, System.Type>("Swing Speed Increase", typeof(int)) },
 
                 { "balanced", new Tuple<string, System.Type>("Balanced", typeof(bool)) },
 
@@ -242,6 +242,7 @@ namespace RazorEnhanced
                 { "skill:", new Tuple<string, System.Type>("Bonus", typeof(string)) },
 
                 { "skill required:", new Tuple<string, System.Type>("Skill", typeof(string)) },
+                { "artifact rarity", new Tuple<string, System.Type>("Art. Rarity", typeof(int)) },
                 
 
             };
@@ -377,8 +378,7 @@ namespace RazorEnhanced
 
                 foreach (Item bag in subcontainers)
                 {
-                    // If is a Book of BOD skip
-                    if (bag.ItemID == 0x2259) { continue; }
+                    if (bag.ItemID == 0x2259) { continue; } // If is a Book of BOD skip
                     Items.UseItem(bag);
                     Misc.Pause(800);
                     List<Item> itemInSubContainer = FindItems(bag, true);
