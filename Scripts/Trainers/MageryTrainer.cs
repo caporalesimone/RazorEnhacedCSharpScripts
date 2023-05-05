@@ -253,7 +253,8 @@ namespace SharpRE.Scripts
 
                         Misc.Pause(100);
 
-                        var entries = Journal.GetJournalEntry(stamp);
+                        Journal journal = new Journal();
+                        var entries = journal.GetJournalEntry(stamp);
 
                         if (entries.Count > 0)
                         {

@@ -314,13 +314,14 @@ namespace RazorEnhanced
                                                       , "verite"
                                                       , "valorite" };
 
+                Journal journal = new Journal();
                 for (int i = 0; i < oreStringType.Length; i++)
                 {
                     stringJournal = "You dig some " + oreStringType[i] + " ore and put it in your backpack.";
-                    if (Journal.Search(stringJournal) == true)
+                    if (journal.Search(stringJournal) == true)
                     {
                         Log(stringJournal);
-                        Journal.Clear();
+                        journal.Clear();
 
                         if (i > heighestOreType)
                         {
@@ -338,10 +339,10 @@ namespace RazorEnhanced
 
 
                 stringJournal = "There is no metal here to mine.";
-                if (Journal.Search(stringJournal) == true)
+                if (journal.Search(stringJournal) == true)
                 {
                     Log(stringJournal);
-                    Journal.Clear();
+                    journal.Clear();
 
 
                     if (heighestOreType > 0)

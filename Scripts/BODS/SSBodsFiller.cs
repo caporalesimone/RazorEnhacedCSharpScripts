@@ -1144,7 +1144,8 @@ namespace BODS
                     Common.Pause(300);
                 }
 
-                Journal.Clear();
+                Journal journal = new Journal();
+                journal.Clear();
                 Gumps.SendAction(gump, todo.GumpButtons.category);
                 Gumps.WaitForGump(gump, delayGump);
                 Gumps.SendAction(gump, todo.GumpButtons.selection);
@@ -1155,7 +1156,7 @@ namespace BODS
                 {
                     safeexit--;
                     Common.Pause(100);
-                    if (Journal.Search("have worn out your"))
+                    if (journal.Search("have worn out your"))
                     {
                         break;
                     }
