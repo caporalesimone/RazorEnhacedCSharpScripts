@@ -9,6 +9,14 @@
 // Developed by SimonSoft - 2021
 //
 
+//#assembly <Newtonsoft.Json.dll>
+
+//#import <bod_libs/Bod.cs>
+//#import <bod_libs/BodCraftableDatabase.cs>
+//#import <../Libs/common.cs>
+//#import <../Libs/logger.cs>
+//#import <../Libs/stored_data.cs>
+
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -16,12 +24,6 @@ using System.Linq;
 using System.Windows.Forms;
 using RazorEnhanced;
 using Scripts.Libs;
-
-//#import <bod_libs/Bod.cs>
-//#import <bod_libs/BodCraftableDatabase.cs>
-//#import <../Libs/common.cs>
-//#import <../Libs/logger.cs>
-//#import <../Libs/stored_data.cs>
 
 namespace BODS
 {
