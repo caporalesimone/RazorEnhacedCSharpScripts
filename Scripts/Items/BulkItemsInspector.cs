@@ -6,6 +6,8 @@
 // 
 // Developed by SimonSoft on Demise Server - 2021
 //
+//
+//-#forcedebug // Remove - if you want to run the script in debug without the Script Editor
 
 using System;
 using System.Collections;

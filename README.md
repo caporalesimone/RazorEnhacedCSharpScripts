@@ -58,10 +58,19 @@ Some C# files uses classes written in other C# files and RazorEnhanced implement
 
 So be careful to have all required file in the correct path before run the script.
 
-### _//#forcerelease_ directive
-If you want to do huge amount of math or other time consuming operations, using this directive, the script will be compiled in _RELEASE_ instead of _DEBUG_ having it run more faster.
-_RELEASE_ is not debuggable.
-* `//#forcerelease`
+### _//#assembly_ directive
+Some C# script may need an external assembly and this directive allow you to specify which assembly you need.
+You can use this directive instead of add the assembly into the `assemblies.cfg` file.
+Both absolute and relative path are valid
+* `//#assembly <Newtonsoft.Json.dll>`
+* `//#assembly "C:\absolutePath\awesome.dll>`
+
+### _//#forcedebug_ directive
+By default all script are builded in release.
+During the development, haveing the script in debug is very useful and this directive force the build to be in debug.
+You can do the same thing running the script from the Script Editor and click on the debug button.
+Remember that debug build is always slower than the default release. Use it only during the development.
+* `//#forcedebug`
 
 ## Notes
 
