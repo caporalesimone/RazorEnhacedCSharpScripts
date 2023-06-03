@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Experimental\PathFinding\PathFinding.cs" />
     <Compile Include="Test\TestGump.cs" />
     <Compile Include="Experimental\SharedMemory\Writer.cs" />
     <Compile Include="Experimental\SharedMemory\Reader.cs" />

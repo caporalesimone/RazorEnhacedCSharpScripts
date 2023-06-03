@@ -7,15 +7,16 @@
 // To use this script add Newtonsoft.Json.dll to Assemblies.cfg file
 // To edit this script without VS errors add referene to Newtonsoft.Json.dll from RE folder
 //
+
+//#assembly <Newtonsoft.Json.dll>
+
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RazorEnhanced;
+
 
 namespace Scripts.Libs
 {
