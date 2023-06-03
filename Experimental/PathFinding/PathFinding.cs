@@ -5,6 +5,8 @@ using System.IO;
 using Newtonsoft.Json;
 using System.Text;
 using System.Collections.Generic;
+using System.Security.Policy;
+using Assistant;
 
 
 //#forcedebug
@@ -71,13 +73,37 @@ namespace RazorEnhanced
     }
 
 
+    public class items
+    {
+        public byte world { get; set; }
+        public int serial { get; set; }
+        public int x { get; set; }
+        public int y { get; set; }
+        public int z { get; set; }  
+        public int graphic { get; set; }
+    }
 
+    public class ItemsAdd
+    {
+        public List<items> items { get; set; }
+    }
+
+    public class JsonAddItem
+    {
+        [JsonProperty("ItemsAdd")]
+        public ItemsAdd ItemsAdd;
+    }
+
+/*
+Send json {
+"ItemsAdd": {
+"items": [{
+"world": u8, serial": u32, "x": isize, "y": isize, "z": i8, "graphic": u16}, ...]}}
+*/
 
 
     public class PathFindingRust
     {
-
-
         private void Move(int nextPosX, int nextPosY, bool run)
         {
             try
@@ -105,8 +131,12 @@ namespace RazorEnhanced
                 else if (nextTileX == -1 && nextTileY == -1) { direction = "Up"; }
 
                 var wasMovementCalled = false;
+
+                int cnt = 1000;
                 while (true)
                 {
+                    if (cnt-- <= 0) { break; }
+
                     if (Player.Position.X == nextPosX && Player.Position.Y == nextPosY)
                     {
                         return;
@@ -130,7 +160,7 @@ namespace RazorEnhanced
                             Player.Walk(direction);
                         }
                     }
-
+                    Misc.Pause(1);
                 }
             }
             catch (Exception ex)
@@ -140,18 +170,30 @@ namespace RazorEnhanced
         }
 
 
-        public void Run()
+        string CreateJSONtoDestintion(int x, int y, int z)
         {
-            var request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:3000/api/");
+            Options opt = new Options
+            {
+                allow_diagonal_move = true,
+                heuristic_distance = "Manhattan",
+                heuristic_straight = 5,
+                heuristic_diagonal = 5,
+                cost_turn = 1,
+                cost_move_straight = 1,
+                cost_move_diagonal = 1,
+                left = 0,
+                top = 0,
+                right = 6144,
+                bottom = 4096,
+                all_points = false
+            };
 
             int startX = Player.Position.X;
             int startY = Player.Position.Y;
             int startZ = Player.Position.Z;
-            int destX = 1418;
-            int destY = 1577; 
-            int destZ = 30;
-
-            //string json = "{ \"TracePath\":{ \"world\":1,\"sx\":3485,\"sy\":2581,\"sz\":15,\"dx\":3452,\"dy\":2677,\"dz\":24,\"options\":{ } } }";
+            int destX = x;
+            int destY = y;
+            int destZ = z;
 
             string json = $@"
             {{
@@ -164,12 +206,19 @@ namespace RazorEnhanced
                     ""dx"":{destX},
                     ""dy"":{destY},
                     ""dz"":{destZ},
-                    ""options"": {{}}    
+                    ""options"": {JsonConvert.SerializeObject(opt)}
                 }}
             }}
             ";
+            return json;
+        }
 
-            var data = Encoding.ASCII.GetBytes(json);
+
+        JSONReply GetPathFromServer(string json)
+        {
+            var request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:3000/api/");
+
+            byte[] data = Encoding.ASCII.GetBytes(json);
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
             request.ContentLength = data.Length;
@@ -182,13 +231,100 @@ namespace RazorEnhanced
             var response = (HttpWebResponse)request.GetResponse();
             var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
 
-            JSONReply tmp = JsonConvert.DeserializeObject<JSONReply>(responseString);
+            return JsonConvert.DeserializeObject<JSONReply>(responseString);
+        }
 
-            Misc.SendMessage("Points found: " + tmp.TraceReply.points.Count);
 
-            foreach (var item in tmp.TraceReply.points)
+        void sendItems(string json)
+        {
+            var request = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:3000/api/");
+
+            byte[] data = Encoding.ASCII.GetBytes(json);
+            request.Method = "POST";
+            request.ContentType = "application/x-www-form-urlencoded";
+            request.ContentLength = data.Length;
+
+            using (var stream = request.GetRequestStream())
             {
-                Move(item.x, item.y, true);
+                stream.Write(data, 0, data.Length);
+            }
+
+            var response = (HttpWebResponse)request.GetResponse();
+            var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
+        }
+
+        string CreateJsonSendItems()
+        {
+            ItemsAdd itm = new ItemsAdd();
+
+            itm.items = new List<items>();
+
+
+            Items.Filter findFilter = new Items.Filter();
+            List<Item> allitems = Items.ApplyFilter(findFilter);
+
+            foreach (var item in allitems)
+            {
+
+                if (Misc.Distance(item.Position.X, item.Position.Y, Player.Position.X, Player.Position.Y) > 10) continue;
+
+                if (Math.Abs(item.Position.Z - Player.Position.Z) < 5)
+                {
+                    items it1 = new items()
+                    {
+                        x = item.Position.X,
+                        y = item.Position.Y,
+                        z = item.Position.Z,
+                        graphic = item.ItemID,
+                        serial = item.Serial,
+                        world = (byte)Player.Map
+                    };
+
+                    itm.items.Add(it1);
+                }
+            }
+
+            JsonAddItem additem = new JsonAddItem()
+            {
+                ItemsAdd = itm
+            };
+
+            Player.HeadMessage(5, $"Sent {itm.items.Count} items");
+            string str = JsonConvert.SerializeObject(additem);
+
+            return str;
+        }
+
+
+        public void Run()
+        {
+
+            int destx = 1418;
+            int desty = 1577;
+
+            while (true)
+            {
+                sendItems(CreateJsonSendItems());
+
+                string json = CreateJSONtoDestintion(destx, desty, 30);
+                var tmp = GetPathFromServer(json);
+
+                int count = tmp.TraceReply.points.Count;
+                int breakcnt = 10;
+                foreach (var item in tmp.TraceReply.points)
+                {
+                    //Player.HeadMessage(10, $"{count-- * 100 / tmp.TraceReply.points.Count}");
+                    Move(item.x, item.y, true);
+                    if (breakcnt-- <= 0) break;
+                }
+
+                var dist = Misc.Distance(Player.Position.X, Player.Position.Y, destx, desty);
+                if (dist < 2) 
+                { 
+                    break; 
+                }
+
+                
             }
 
             Player.HeadMessage(2, "Done");
