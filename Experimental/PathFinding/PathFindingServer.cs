@@ -16,6 +16,10 @@ namespace RazorEnhanced
         [DllImport("path_server_lib.dll")]
         private static extern void start_path_server();
 
+        [DllImport("path_server_lib.dll")]
+        private static extern void stop_path_server();
+
+
         public void Run()
         {
             start_path_server();
@@ -23,7 +27,11 @@ namespace RazorEnhanced
                 Misc.SendMessage("Pathfinding Server is running");
                 Misc.Pause(5000);
             }
-        }
+          }
 
+        public void Dispose()
+        {
+            stop_path_server();
+        }
     }
 }
