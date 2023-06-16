@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 //#forcedebug
 
@@ -151,7 +151,7 @@ namespace RazorEnhanced
                     Items.UseItem(hatchet);
                     Target.WaitForTarget(15000);
                     Target.TargetExecute(logs);
-                    Misc.Pause(700);
+                    Misc.Pause(800);
                 }
             }
         }
