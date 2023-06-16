@@ -51,6 +51,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Experimental\PathFinding\PathFinding.cs" />
+    <Compile Include="Experimental\PathFinding\PathFindingServer_Dynamic_Load.cs" />
+    <Compile Include="Experimental\PathFinding\PathFindingServer.cs" />
     <Compile Include="Scripts\Items\MiningCarts_Stumps.cs" />
     <Compile Include="Scripts\Tailoring\PlantsPicker.cs" />
     <Compile Include="Test\TestGump.cs" />
