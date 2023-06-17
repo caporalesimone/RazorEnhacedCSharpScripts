@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Script</RootNamespace>
     <AssemblyName>Script</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
     <TargetFrameworkProfile />
@@ -53,6 +53,7 @@
     <Compile Include="Experimental\PathFinding\PathFinding.cs" />
     <Compile Include="Experimental\PathFinding\PathFindingServer_Dynamic_Load.cs" />
     <Compile Include="Experimental\PathFinding\PathFindingServer.cs" />
+    <Compile Include="Scripts\BODS\Bod_Item.cs" />
     <Compile Include="Scripts\Items\MiningCarts_Stumps.cs" />
     <Compile Include="Scripts\Tailoring\PlantsPicker.cs" />
     <Compile Include="Test\TestGump.cs" />

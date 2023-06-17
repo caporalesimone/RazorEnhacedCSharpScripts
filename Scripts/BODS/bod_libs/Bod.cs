@@ -7,12 +7,14 @@
 //          This is a library made for SSBodsFiller and was tailored on Demise Server
 //          It could work on other server with small changes
 
+//#include <../../Libs/Logger.cs>
+//#include "BodCraftableDatabase.cs"
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using RazorEnhanced;
-using Scripts.Libs;
 
 namespace BODS
 {

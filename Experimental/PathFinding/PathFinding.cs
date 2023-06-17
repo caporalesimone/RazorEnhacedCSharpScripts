@@ -298,15 +298,21 @@ Send json {
 
         public void Run()
         {
-
+            /*
             int destx = 1418;
             int desty = 1577;
+            int destz = 30;
+             */
+
+            int destx = 1216;
+            int desty = 1219;
+            int destz = -90;
 
             while (true)
             {
                 sendItems(CreateJsonSendItems());
 
-                string json = CreateJSONtoDestintion(destx, desty, 30);
+                string json = CreateJSONtoDestintion(destx, desty, destz);
                 var tmp = GetPathFromServer(json);
 
                 int count = tmp.TraceReply.points.Count;

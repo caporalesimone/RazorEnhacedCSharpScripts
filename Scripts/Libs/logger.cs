@@ -6,9 +6,8 @@
 
 using System;
 using System.Windows.Forms;
-using RazorEnhanced;
 
-namespace Scripts.Libs
+namespace RazorEnhanced
 {
     class Logger
     {

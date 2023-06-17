@@ -7,11 +7,11 @@
 //          This is a library made for SSBodsFiller and was tailored on Demise Server
 //          It could work on other server with small changes on craftableItemsDatabase
 
+//#import <../../Libs/logger.cs>
+
 using System.Collections.Generic;
 using System.Linq;
-using Scripts.Libs;
 
-//#import <../../Libs/logger.cs>
 
 namespace BODS
 {
