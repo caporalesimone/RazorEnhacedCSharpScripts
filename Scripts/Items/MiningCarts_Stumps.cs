@@ -78,9 +78,9 @@ namespace RazorEnhanced
             }
 
             Player.UnEquipItemByLayer("RightHand");
-            Misc.Pause(700);
+            Misc.Pause(800);
             Player.UnEquipItemByLayer("LeftHand");
-            Misc.Pause(700);
+            Misc.Pause(800);
 
             if (rightHand != null) { Player.EquipItem(rightHand); Misc.Pause(700); }
             if (leftHand != null) { Player.EquipItem(leftHand); Misc.Pause(700); }
@@ -92,7 +92,7 @@ namespace RazorEnhanced
             if (boards == null) return;
 
             Mobiles.UseMobile(Player.Serial);
-            Misc.Pause(700);
+            Misc.Pause(800);
 
             while (true)
             {
@@ -100,11 +100,11 @@ namespace RazorEnhanced
                 if (boards == null) break;
 
                 Items.Move(boards.Serial, BEETLE_SERIAL, -1);
-                Misc.Pause(700);
+                Misc.Pause(800);
             }
 
             Mobiles.UseMobile(BEETLE_SERIAL);
-            Misc.Pause(300); // Not really needed. Just to be safe
+            Misc.Pause(500); // Not really needed. Just to be safe
         }
 
         private Item EquipHatchet()
@@ -146,6 +146,7 @@ namespace RazorEnhanced
                 if (logs == null) { break; }
 
                 Item hatchet = EquipHatchet();
+                Misc.Pause(800);
                 if (hatchet != null)
                 {
                     Items.UseItem(hatchet);
