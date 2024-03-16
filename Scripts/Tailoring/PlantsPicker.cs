@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml.XPath;
 
@@ -13,20 +13,20 @@ namespace RazorEnhanced
         private const int START_FROM_RUNE_NUMBER = 1;
         private const int FIND_RADIUS = 35;
 
-        private const int SERIAL_RUNEBOOK = 0x414D517D;
-        private const int SERIAL_CONTAINER = 0x417BE7A9;
+        private int SERIAL_RUNEBOOK = 0; // If 0 disable recall
+        private int SERIAL_CONTAINER = 0x417BE7A9;
 
         private List<int> PLANTS = new List<int>()
         { 
             0x0C51, 0x0C52, 0x0C53, 0x0C54, // Cotton
             0x1A99, 0x1A9A, 0x1A9B,         // Flax
+         // 0x0C5E, 0x0C5F, 0x0C60, // Vines but this plant does not change graphics so this script remains blocked
             
             0x0C61, 0x0C62, 0x0C63, // Turnip
-            0x0C6F,         // Onions
-            0x0C76,         // Carrots
-         // 0x0C5E,0x0C5F,  // Vines but this plant does not change graphics so this script remains blocked
-
-         // 0x0C56, 0x0C57, 0x0C58, # Wheat
+            0x0C6F, // Onions
+            0x0C76, // Carrots
+         
+         // 0x0C55, 0x0C56, 0x0C57, 0x0C58, // Wheat
          };
 
         private List<int> RESOURCES = new List<int>()
@@ -63,6 +63,19 @@ namespace RazorEnhanced
                 {
                     GoBackHome();
                     rune = START_FROM_RUNE_NUMBER; // Restart from the begin
+                }
+
+                if (Player.Weight > Player.MaxWeight - 5)
+                {
+                    Player.HeadMessage(33, "Overloaded");
+                    if (SERIAL_RUNEBOOK != 0)
+                    {
+                        GoBackHome();
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -156,6 +169,10 @@ namespace RazorEnhanced
 
         private void Recall(int runePosition )
         {
+            if (SERIAL_RUNEBOOK == 0) {
+                Misc.Pause(500);
+                return;
+            }
             Items.UseItem(SERIAL_RUNEBOOK);
             Gumps.WaitForGump(0, 20000);
             uint gump = Gumps.CurrentGump();
@@ -183,6 +200,11 @@ namespace RazorEnhanced
 
         private void GoBackHome()
         {
+            if (SERIAL_RUNEBOOK == 0) {
+                Misc.Pause(500);
+                return;
+            }
+            
             Recall(HOME_RUNE);
             UnloadResources();
 
