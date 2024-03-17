@@ -53,6 +53,7 @@ namespace RazorEnhanced
 
             while(true)
             {
+                Misc.Pause(10);
                 Recall(rune);
 
                 bool harvestResult = HarvestTheField();

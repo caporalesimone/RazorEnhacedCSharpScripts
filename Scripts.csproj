@@ -54,8 +54,9 @@
     <Compile Include="Experimental\PathFinding\PathFindingServer_Dynamic_Load.cs" />
     <Compile Include="Experimental\PathFinding\PathFindingServer.cs" />
     <Compile Include="Scripts\BODS\Bod_Item.cs" />
+    <Compile Include="Scripts\Gathering\TreeChopper.cs" />
     <Compile Include="Scripts\Items\MiningCarts_Stumps.cs" />
-    <Compile Include="Scripts\Tailoring\PlantsPicker.cs" />
+    <Compile Include="Scripts\Gathering\PlantsPicker.cs" />
     <Compile Include="Test\TestGump.cs" />
     <Compile Include="Experimental\SharedMemory\Writer.cs" />
     <Compile Include="Experimental\SharedMemory\Reader.cs" />
@@ -139,6 +140,8 @@
   <ItemGroup>
     <None Include="app.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Scripts\Tailoring\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
