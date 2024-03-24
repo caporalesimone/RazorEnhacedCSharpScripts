@@ -42,7 +42,7 @@ namespace RazorEnhanced
             0x1EBD, // Wheat
         };
 
-        public PlantsPicker ()
+        public PlantsPicker()
         {
         }
 

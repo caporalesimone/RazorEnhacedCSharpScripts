@@ -1,4 +1,5 @@
 using Assistant;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -18,16 +19,19 @@ namespace RazorEnhanced
             public int Y { get; set; }
             public int Z { get; set; }
             public string Name { get; set; }
-
             public int StaticID { get; set; }
+            public DateTime LastChop { get; set; }
         }
 
         private List<Tree> ignore_list = new List<Tree>();
 
-        private const int MAX_WEIGHT_RANGE = 25;
-        private const int MAX_WIGHT_FOR_RESTART_WORK = 170; // If weight is over this value, the script will pause
+        private const bool DROP_COMMON_LOGS = false;
+        private const int LOGS_ID = 0x1BDD;
 
-        private const int FIND_RADIUS = 5;
+        private const int MAX_WEIGHT_RANGE = 25;
+        private const int MAX_WIGHT_FOR_RESTART_WORK = 255; // If weight is over this value, the script will pause
+
+        private const int FIND_RADIUS = 10;
         private readonly List<int> HATCHET_IDs = new List<int> { 0x0F49 };
         
 
@@ -62,7 +66,7 @@ namespace RazorEnhanced
                     }
                 }
 
-                Misc.Pause(1000);
+                Misc.Pause(800);
             }
         }
 
@@ -71,6 +75,18 @@ namespace RazorEnhanced
             if (Player.Weight > Player.MaxWeight - MAX_WEIGHT_RANGE)
             {
                 Player.HeadMessage(33, "Backpack is full");
+
+                if (DROP_COMMON_LOGS == true)
+                {
+                    Player.HeadMessage(33, "Dropping logs");
+                    var logs = Items.FindByID(LOGS_ID, 0, Player.Backpack.Serial);
+                    if (logs != null)
+                    {
+                        Items.MoveOnGround(logs, logs.Amount, Player.Position.X+1, Player.Position.Y, Player.Position.Z);
+                        Misc.Pause(500);
+                    }
+                }
+
                 return true;
             }
             return false;
@@ -78,6 +94,8 @@ namespace RazorEnhanced
 
         private List<Tree> FindTrees()
         {
+            Player.HeadMessage(33, "Searching for trees");
+
             int x = Player.Position.X;
             int y = Player.Position.Y;
 
@@ -87,6 +105,7 @@ namespace RazorEnhanced
             {
                 for (int j = -FIND_RADIUS; j < FIND_RADIUS; j++)
                 {
+                    Misc.Pause(1);
                     List<Statics.TileInfo> tile = Statics.GetStaticsTileInfo(x + i, y + j, Player.Map);
                     if (tile.Count == 0) continue;
                     List<Statics.TileInfo> found = tile.Where(item => Statics.GetTileName(item.ID).Contains("tree")).ToList();
@@ -103,7 +122,8 @@ namespace RazorEnhanced
                             Y = y + j,
                             Z = item.StaticZ,
                             Name = Statics.GetTileName(item.ID),
-                            StaticID = item.ID
+                            StaticID = item.ID,
+                            LastChop = DateTime.Now,
                         };
                         trees.Add(t);
                     }
@@ -119,6 +139,8 @@ namespace RazorEnhanced
                 return distance1.CompareTo(distance2);
             });
 
+            Player.HeadMessage(33, $"Found {trees.Count} trees");
+
             return trees;
         }
 
@@ -126,13 +148,16 @@ namespace RazorEnhanced
         {
             if (tree == null) return;
 
-            Player.PathFindTo(tree.X+1, tree.Y-1, tree.Z);
-
             int safeExit = 200;
 
             while (true)
             {
-                
+                if (safeExit % 100 == 0)
+                {
+                    Player.PathFindTo(tree.X + 1, tree.Y - 1, tree.Z);
+                    Misc.Pause(200);
+                }
+
                 if (safeExit-- <= 0)
                 {
                     Player.HeadMessage(33, "Safe EXIT during pathfinding");
@@ -140,7 +165,12 @@ namespace RazorEnhanced
                 }
 
                 double dist = Misc.Distance(Player.Position.X, Player.Position.Y, tree.X, tree.Y);
-                if (dist <= 2) break;
+                if (dist <= 2)
+                {
+                    Player.HeadMessage(33, $"Arrived at the tree - {200 - safeExit} iterations");
+                    break;
+                }
+                    
 
                 Misc.Pause(10);
             }
@@ -158,11 +188,18 @@ namespace RazorEnhanced
             while (true)
             {
                 Player.HeadMessage(33, "Chopping the tree");
-                Item hatchet = EquipHatchet();
+                Item hatchet = SearchAndEquipHatchet();
+                if (hatchet == null)
+                {
+                    Player.HeadMessage(33, "No hatchet found");
+                    Misc.Pause(1000);
+                    break;
+                }
+
                 Items.UseItem(hatchet);
                 Target.WaitForTarget(5000);
                 Target.TargetExecute(tree.X, tree.Y, tree.Z, tree.StaticID);
-                Misc.Pause(1000);
+                Misc.Pause(1500);
 
                 if (journal.Search("not enough wood") == true)
                 {
@@ -170,14 +207,21 @@ namespace RazorEnhanced
                     break;
                 }
 
+                if (journal.Search("too far away") == true)
+                {
+                    break;
+                }
+
                 if (CheckPlayerOverloaded() == true)
                 {
                     break;
                 }
+
+                Misc.Pause(10);
             }
         }
 
-        private Item EquipHatchet()
+        private Item SearchAndEquipHatchet()
         {
             Item rightHand = Player.GetItemOnLayer("RightHand");
             Item leftHand = Player.GetItemOnLayer("LeftHand");
@@ -187,15 +231,24 @@ namespace RazorEnhanced
             if (leftHand != null && !HATCHET_IDs.Contains(leftHand.ItemID)) { Player.UnEquipItemByLayer("LeftHand"); Misc.Pause(700); }
             if (leftHand != null && HATCHET_IDs.Contains(leftHand.ItemID)) return leftHand;
 
-
             Items.Filter itemFilter = new Items.Filter
             {
                 Enabled = true,
                 OnGround = 0,
             };
-            foreach (var itemID in HATCHET_IDs) itemFilter.Graphics.Add(itemID);
 
-            return Items.ApplyFilter(itemFilter)[0];
+            foreach (var itemID in HATCHET_IDs) itemFilter.Graphics.Add(itemID);
+            Item hatchet = Items.ApplyFilter(itemFilter)[0];
+
+            if (hatchet != null)
+            {
+                Player.EquipItem(hatchet.Serial);
+                Player.HeadMessage(33, "Equipping Hatchet");
+                Misc.Pause(2500);
+                return hatchet;
+            }
+
+            return null;
         }
 
     }
