@@ -57,6 +57,7 @@
     <Compile Include="Scripts\Gathering\TreeChopper.cs" />
     <Compile Include="Scripts\Items\MiningCarts_Stumps.cs" />
     <Compile Include="Scripts\Gathering\PlantsPicker.cs" />
+    <Compile Include="Scripts\Trainers\RemoveTraps-Loop.cs" />
     <Compile Include="Scripts\Trainers\RemoveTraps.cs" />
     <Compile Include="Test\TestGump.cs" />
     <Compile Include="Experimental\SharedMemory\Writer.cs" />
