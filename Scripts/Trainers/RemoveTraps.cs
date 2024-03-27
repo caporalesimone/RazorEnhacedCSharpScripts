@@ -62,6 +62,7 @@ namespace RazorEnhanced
             Cell.CellType[,] gameBoard = CalculateGameMatrix(ParseGameGump(game));
             Direction[,] visited = new Direction[gameBoard.GetLength(0), gameBoard.GetLength(1)];
 
+            int safeCounter = 30;
             while (true)
             {
                 bool gameResult = PlayGame(gameBoard, ref visited);
@@ -69,6 +70,20 @@ namespace RazorEnhanced
                 if (gameResult) break;
                 else
                 {
+                    if (safeCounter-- <= 0)
+                    {
+                        Misc.SendMessage("Safe counter reached. Something went wrong", 33);
+                        Misc.SendMessage("Going to reset the visited matrix", 33);
+                        for (int i = 0; i < visited.GetLength(0); i++)
+                        {
+                            for (int j = 0; j < visited.GetLength(1); j++)
+                            {
+                                visited[i, j] = Direction.Unknown;
+                            }
+                        }
+                        safeCounter = 30;
+                    }
+
                     if (Gumps.HasGump())
                     {
                         continue;
@@ -95,44 +110,12 @@ namespace RazorEnhanced
             // The last cell is always the destination cell and I add it with a fake value
             visited[visited.GetLength(0) - 1, visited.GetLength(1) - 1] = Direction.Up;
 
-            /*
             for (int i = 0; i < visited.GetLength(0); i++)
             {
                 for (int j = 0; j < visited.GetLength(1); j++)
                 {
                     if (visited[i, j] == Direction.Invalid) visited[i, j] = Direction.Unknown;
                     result += visited[i, j] != Direction.Unknown ? "X" : "0";
-                }
-                result += "\n";
-            }
-            */
-
-            for (int i = 0; i < visited.GetLength(0); i++)
-            {
-                for (int j = 0; j < visited.GetLength(1); j++)
-                {
-                    if (visited[i, j] == Direction.Invalid) visited[i, j] = Direction.Unknown;
-                    result += visited[i, j] != Direction.Unknown ? "X" : "0";
-                    /*
-                    switch (visited[i, j])
-                    {
-                        case Direction.Up:
-                            result += "?";
-                            break;
-                        case Direction.Right:
-                            result += "?";
-                            break;
-                        case Direction.Down:
-                            result += "?";
-                            break;
-                        case Direction.Left:
-                            result += "?";
-                            break;
-                        default:
-                            result += "?";
-                            break;
-                    }
-                    */
                 }
                 result += "\n";
             }
@@ -259,22 +242,6 @@ namespace RazorEnhanced
                     }
                 }
 
-                // Try moving right
-                if (col + 1 < N && game_matrix[row, col+1] != Cell.CellType.TraversedCell && visited[row, col + 1] == Direction.Unknown)
-                {
-                    if (MoveTo(Direction.Right))
-                    {
-                        visited[row, col] = Direction.Right;
-                        col++;
-                        continue;
-                    }
-                    else
-                    {
-                        visited[row, col + 1] = Direction.Invalid;
-                        return false;
-                    }
-                }
-
                 // Try moving down
                 if (row + 1 < N && game_matrix[row + 1, col] != Cell.CellType.TraversedCell && visited[row + 1, col] == Direction.Unknown)
                 {
@@ -287,6 +254,22 @@ namespace RazorEnhanced
                     else
                     {
                         visited[row + 1, col] = Direction.Invalid;
+                        return false;
+                    }
+                }
+
+                // Try moving right
+                if (col + 1 < N && game_matrix[row, col + 1] != Cell.CellType.TraversedCell && visited[row, col + 1] == Direction.Unknown)
+                {
+                    if (MoveTo(Direction.Right))
+                    {
+                        visited[row, col] = Direction.Right;
+                        col++;
+                        continue;
+                    }
+                    else
+                    {
+                        visited[row, col + 1] = Direction.Invalid;
                         return false;
                     }
                 }

@@ -1,4 +1,4 @@
-﻿/************************************************************************
+/************************************************************************
  * Magery Trainer: Simple Magery Trainer
  * Dynamic
  * **********************************************************************/
@@ -10,6 +10,8 @@ namespace SharpRE.Scripts
     using System.Threading.Tasks;
     using System.Linq;
     using RazorEnhanced;
+    using Ultima;
+    using System.Collections.Generic;
 
     class MageryTrainer : Form
     {
@@ -163,7 +165,7 @@ namespace SharpRE.Scripts
             this.btnStart.TabIndex = 5;
             this.btnStart.Text = "Start";
             this.btnStart.UseVisualStyleBackColor = true;
-            this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
+            this.btnStart.Click += new System.EventHandler(this.BtnStart_Click);
             // 
             // lblStatus
             // 
@@ -195,6 +197,16 @@ namespace SharpRE.Scripts
         }
         #endregion
 
+        Dictionary<string, int> spellsTiming = new Dictionary<string, int>()
+        {
+            { "Bless", 1700 },
+            { "Greater Heal", 1600 },
+            { "Magic Reflection", 1800 },
+            { "Invisibility", 2100 },
+            { "Mana Vampire", 2300 },
+            { "Earthquake", 2600 }
+        };
+
         int Mana
         {
             get
@@ -212,7 +224,6 @@ namespace SharpRE.Scripts
         }
 
         bool _running = false;
-        DateTime _started;
         int _MedAttemptDelay = 14;
 
         public MageryTrainer()
@@ -220,15 +231,12 @@ namespace SharpRE.Scripts
             InitializeComponent();
         }
 
-
         public void Run()
         {
             Application.EnableVisualStyles();
             Application.Run(this);
 
         }
-
-
         void Meditate()
         {
             bool meditating = false;
@@ -272,8 +280,7 @@ namespace SharpRE.Scripts
             }
         }
 
-
-        private void btnStart_Click(object sender, System.EventArgs e)
+        private void BtnStart_Click(object sender, System.EventArgs e)
         {
             if (_running)
                 _running = false;
@@ -288,7 +295,6 @@ namespace SharpRE.Scripts
 
                 Task.Run(() =>
                 {
-                    _started = DateTime.Now;
                     lblStartSkill.Text = Player.GetSkillValue("Magery").ToString();
                     while (_running)
                     {
@@ -301,7 +307,8 @@ namespace SharpRE.Scripts
                             string spell = "Bless";
                             lblStatus.Text += spell;
                             Spells.Cast(spell);
-                            Target.WaitForTarget(1025);
+                            spellsTiming.TryGetValue(spell, out int delay);
+                            Target.WaitForTarget(delay);
                             Target.Self();
                         }
                         else if (SkillValue >= 45 && SkillValue < 55)
@@ -309,7 +316,8 @@ namespace SharpRE.Scripts
                             string spell = "Greater Heal";
                             lblStatus.Text += spell;
                             Spells.Cast(spell);
-                            Target.WaitForTarget(1275);
+                            spellsTiming.TryGetValue(spell, out int delay);
+                            Target.WaitForTarget(delay);
                             Target.Self();
                         }
                         else if (SkillValue >= 55 && SkillValue < 65)
@@ -317,14 +325,16 @@ namespace SharpRE.Scripts
                             string spell = "Magic Reflection";
                             lblStatus.Text += spell;
                             Spells.Cast(spell);
-                            Misc.Pause(1525);
+                            spellsTiming.TryGetValue(spell, out int delay);
+                            Target.WaitForTarget(delay);
                         }
                         else if (SkillValue >= 65 && SkillValue < 75)
                         {
                             string spell = "Invisibility";
                             lblStatus.Text += spell;
                             Spells.Cast(spell);
-                            Target.WaitForTarget(1775);
+                            spellsTiming.TryGetValue(spell, out int delay);
+                            Target.WaitForTarget(delay);
                             Target.Self();
                         }
                         else if (SkillValue >= 75 && SkillValue < 90)
@@ -332,7 +342,8 @@ namespace SharpRE.Scripts
                             string spell = "Mana Vampire";
                             lblStatus.Text += spell;
                             Spells.Cast(spell);
-                            Target.WaitForTarget(2025);
+                            spellsTiming.TryGetValue(spell, out int delay);
+                            Target.WaitForTarget(delay);
                             Target.Self();
                         }
                         else if (SkillValue >= 90 && SkillValue < 120)
@@ -340,6 +351,8 @@ namespace SharpRE.Scripts
                             string spell = "Earthquake";
                             lblStatus.Text += spell;
                             Spells.Cast(spell);
+                            spellsTiming.TryGetValue(spell, out int delay);
+                            Target.WaitForTarget(delay);
                             Misc.Pause(2500);
                         }
                         lblCurrentSkill.Text = Player.GetSkillValue("Magery").ToString();
