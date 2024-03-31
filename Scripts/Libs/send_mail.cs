@@ -158,15 +158,16 @@ namespace Scripts.Libs
         private readonly EmailManager mailMan = null;
         private readonly EmailSendConfigure myConfig = null;
         private readonly EmailContent myContent = null;
+        private readonly StoredData storedData = new StoredData();
 
         public Email(string fromName, string subject)
         {
-            mailSettings = StoredData.GetData<EmailSettings>("mailSettings", true);
+            mailSettings = storedData.GetData<EmailSettings>("mailSettings", StoredData.StoreType.Global);
             if (mailSettings is null)
             {
                 Misc.SendMessage("WARNING!\nEmails credentials are not configured. Fill your mail infos into Data\\StoredData.json file", 33);
                 mailSettings = new EmailSettings();
-                StoredData.StoreData(mailSettings, "mailSettings", true);
+                storedData.StoreData(mailSettings, "mailSettings", StoredData.StoreType.Global);
             }
 
             mailMan = new EmailManager(mailSettings.SMTP);

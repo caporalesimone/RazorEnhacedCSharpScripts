@@ -1,11 +1,9 @@
-using Assistant;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Xml.XPath;
 
 //#forcedebug
+//#import <../Libs/stored_data.cs>
 
 namespace RazorEnhanced
 {
@@ -23,22 +21,29 @@ namespace RazorEnhanced
             public DateTime LastChop { get; set; }
         }
 
-        private List<Tree> ignore_list = new List<Tree>();
+        private List<Tree> ignore_list;
 
-        private const bool DROP_COMMON_LOGS = false;
+        private const bool DROP_COMMON_LOGS = true;
         private const int LOGS_ID = 0x1BDD;
 
         private const int MAX_WEIGHT_RANGE = 25;
         private const int MAX_WIGHT_FOR_RESTART_WORK = 255; // If weight is over this value, the script will pause
 
         private const int FIND_RADIUS = 10;
-        private readonly List<int> HATCHET_IDs = new List<int> { 0x0F49 };
-        
+        private readonly List<int> HATCHET_IDs = new List<int> { 0x0F49, 0x1443 };
+        private readonly List<string> INVALID_TREE_NAMES = new List<string> { "o'hii tree" };
+
+        private readonly StoredData json_storedData = new StoredData();
 
         public void Run()
         {
+            ignore_list = json_storedData.GetData<List<Tree>>("ChoppedTree",StoredData.StoreType.Character);
+            if (ignore_list == null) ignore_list = new List<Tree>();
+
             while (true)
             {
+                PurgeIgnoreList();
+
                 if (CheckPlayerOverloaded() == true)
                 {
                     while (Player.Weight >= MAX_WIGHT_FOR_RESTART_WORK)
@@ -48,18 +53,23 @@ namespace RazorEnhanced
                     }
                 }
 
-                var tree = FindTrees();
+                var trees = FindTrees();
 
-                if (tree.Count == 0)
+                if (trees.Count == 0)
                 {
                     Player.HeadMessage(33, "No trees found");
                     continue;
                 }
 
-                foreach (var item in tree)
+                for (int i = 0; i < trees.Count; i++)
                 {
-                    MoveToTree(item);
-                    ChopTheTree(item);
+                    Tree tree = trees[i];
+                    MoveToTree(tree);
+                    ChopTheTree(ref tree);
+
+                    // Update the ingore list on disk
+                    json_storedData.StoreData(ignore_list, "ChoppedTree", StoredData.StoreType.Character);
+
                     if (CheckPlayerOverloaded() == true)
                     {
                         break;
@@ -68,6 +78,11 @@ namespace RazorEnhanced
 
                 Misc.Pause(800);
             }
+        }
+
+        private void PurgeIgnoreList()
+        {
+            ignore_list.RemoveAll(item => item.LastChop < DateTime.Now.AddMinutes(-15));
         }
 
         private bool CheckPlayerOverloaded()
@@ -82,7 +97,7 @@ namespace RazorEnhanced
                     var logs = Items.FindByID(LOGS_ID, 0, Player.Backpack.Serial);
                     if (logs != null)
                     {
-                        Items.MoveOnGround(logs, logs.Amount, Player.Position.X+1, Player.Position.Y, Player.Position.Z);
+                        Items.MoveOnGround(logs, logs.Amount, Player.Position.X + 1, Player.Position.Y, Player.Position.Z);
                         Misc.Pause(500);
                     }
                 }
@@ -106,15 +121,20 @@ namespace RazorEnhanced
                 for (int j = -FIND_RADIUS; j < FIND_RADIUS; j++)
                 {
                     Misc.Pause(1);
-                    List<Statics.TileInfo> tile = Statics.GetStaticsTileInfo(x + i, y + j, Player.Map);
-                    if (tile.Count == 0) continue;
-                    List<Statics.TileInfo> found = tile.Where(item => Statics.GetTileName(item.ID).Contains("tree")).ToList();
-                    if (found.Count == 0) continue;
+                    List<Statics.TileInfo> tiles = Statics.GetStaticsTileInfo(x + i, y + j, Player.Map);
+                    if (tiles.Count == 0) continue;
 
+                    // Remove banned trees
+                    tiles.RemoveAll(tile => INVALID_TREE_NAMES.Contains(Statics.GetTileName(tile.ID)));
+                    // Remove not tree tiles
+                    tiles.RemoveAll(tile => !Statics.GetTileName(tile.ID).Contains("tree"));
+
+                    if (tiles.Count == 0) continue;
+                    
                     // Check if the tree is in the ignore list
                     if (ignore_list.Any(item => item.X == x + i && item.Y == y + j)) continue;
 
-                    foreach (var item in found)
+                    foreach (var item in tiles)
                     {
                         Tree t = new Tree()
                         {
@@ -123,7 +143,7 @@ namespace RazorEnhanced
                             Z = item.StaticZ,
                             Name = Statics.GetTileName(item.ID),
                             StaticID = item.ID,
-                            LastChop = DateTime.Now,
+                            LastChop = DateTime.Now.AddDays(1), // Set a future date because not yet chopped
                         };
                         trees.Add(t);
                     }
@@ -167,7 +187,7 @@ namespace RazorEnhanced
                 double dist = Misc.Distance(Player.Position.X, Player.Position.Y, tree.X, tree.Y);
                 if (dist <= 2)
                 {
-                    Player.HeadMessage(33, $"Arrived at the tree - {200 - safeExit} iterations");
+                    //Player.HeadMessage(33, $"Arrived at the tree - {200 - safeExit} iterations");
                     break;
                 }
                     
@@ -178,7 +198,7 @@ namespace RazorEnhanced
             Misc.Pause(50);
         }
 
-        private void ChopTheTree(Tree tree)
+        private void ChopTheTree(ref Tree tree)
         {
             if (tree == null) return;
 
@@ -200,6 +220,8 @@ namespace RazorEnhanced
                 Target.WaitForTarget(5000);
                 Target.TargetExecute(tree.X, tree.Y, tree.Z, tree.StaticID);
                 Misc.Pause(1500);
+
+                tree.LastChop = DateTime.Now; // Set the last chop time
 
                 if (journal.Search("not enough wood") == true)
                 {

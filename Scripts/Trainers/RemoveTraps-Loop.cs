@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,7 +7,7 @@ namespace RazorEnhanced
 {
     internal class RemoveTrapsLoop
     {
-        private readonly uint gumpID = 368468644;
+        private readonly uint gumpID = 1081473245;
 
         private class Cell
         {
@@ -49,13 +49,19 @@ namespace RazorEnhanced
             int trapSerial = target.PromptTarget("Select the trap to disarm");
 
             int counter = 0;
+            var training_session_start = DateTime.Now;
             while (true)
             {
+                var trap_start = DateTime.Now;
                 RemoveTrap(trapSerial);
-                Misc.SendMessage($"Solved Traps: {++counter}", 33);
+                var trap_elapsed     = (int)(DateTime.Now - trap_start).TotalSeconds;
+                var training_elapsed = (int)(DateTime.Now - training_session_start).TotalSeconds;
+                
+                Misc.SendMessage($"Solved Trap #{++counter} in {trap_elapsed} seconds", 33);
+                Misc.SendMessage($"Total training session elapsed {training_elapsed} seconds", 33);
+                
                 Misc.Pause(3000);
             }
-
         }
 
         private void RemoveTrap(int trapSerial)
@@ -199,12 +205,12 @@ namespace RazorEnhanced
             journal.Clear();
 
             Gumps.SendAction(gumpID, (int)direction);
-            bool ret = Gumps.WaitForGump(gumpID, 3000);
+            bool ret = Gumps.WaitForGump(gumpID, 3750);
 
             bool win = journal.Search("successfully disarm");
             bool fail = journal.Search("fail to disarm the trap");
             
-            Misc.Pause(1000);
+            Misc.Pause(350);
 
             if (win) return true;
             if (fail) return false;
@@ -229,15 +235,19 @@ namespace RazorEnhanced
                         switch (nextDirection)
                         {
                             case Direction.Up:
+                                Player.HeadMessage(33, "↑");
                                 row--;
                                 break;
                             case Direction.Right:
+                                Player.HeadMessage(33, "→");
                                 col++;
                                 break;
                             case Direction.Down:
+                                Player.HeadMessage(33, "↓");
                                 row++;
                                 break;
                             case Direction.Left:
+                                Player.HeadMessage(33, "←");
                                 col--;
                                 break;
                         }
@@ -253,6 +263,7 @@ namespace RazorEnhanced
                 // Try moving down
                 if (row + 1 < N && game_matrix[row + 1, col] != Cell.CellType.TraversedCell && visited[row + 1, col] == Direction.Unknown)
                 {
+                    Player.HeadMessage(33, "↓");
                     if (MoveTo(Direction.Down))
                     {
                         visited[row, col] = Direction.Down;
@@ -269,6 +280,7 @@ namespace RazorEnhanced
                 // Try moving right
                 if (col + 1 < N && game_matrix[row, col + 1] != Cell.CellType.TraversedCell && visited[row, col + 1] == Direction.Unknown)
                 {
+                    Player.HeadMessage(33, "→");
                     if (MoveTo(Direction.Right))
                     {
                         visited[row, col] = Direction.Right;
@@ -285,6 +297,7 @@ namespace RazorEnhanced
                 // Try moving left
                 if (col - 1 >= 0 && game_matrix[row, col - 1] != Cell.CellType.TraversedCell && visited[row, col - 1] == Direction.Unknown)
                 {
+                    Player.HeadMessage(33, "←");
                     if (MoveTo(Direction.Left))
                     {
                         visited[row, col] = Direction.Left;
@@ -301,6 +314,7 @@ namespace RazorEnhanced
                 // Try moving up
                 if (row - 1 >= 0 && game_matrix[row - 1, col] != Cell.CellType.TraversedCell && visited[row - 1, col] == Direction.Unknown)
                 {
+                    Player.HeadMessage(33, "↑");
                     if (MoveTo(Direction.Up))
                     {
                         visited[row, col] = Direction.Up;

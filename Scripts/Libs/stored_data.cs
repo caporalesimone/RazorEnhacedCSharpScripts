@@ -1,175 +1,189 @@
-//C#
-// Store Data
-//  This Library let you store and read data (classes) into a json file located into Data folder
-//  All is sotores as Global or "Per Character"
-// SimonSoft 2021
+﻿//C#
+// Stored Data Library - CaporaleSimone 2021-2024
+// This library allows you to store/read data in a JSON file based on the storage type (Global, Server, or Character).
 //
-// To use this script add Newtonsoft.Json.dll to Assemblies.cfg file
 // To edit this script without VS errors add referene to Newtonsoft.Json.dll from RE folder
-//
 
 //#assembly <Newtonsoft.Json.dll>
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using RazorEnhanced;
 
-
-namespace Scripts.Libs
+namespace RazorEnhanced
 {
-    public class StoredData
+    internal class StoredData
     {
-        /// <summary>
-        /// This Class is only for test
-        /// </summary>
-        private class TestClass
+        public enum StoreType
         {
-            public string A { get; set; }
-            public int B { get; set; }
-            public double C { get; set; }
+            Global,
+            Server,
+            Character
         }
 
-        /// <summary>
-        /// This TestRun is only for test
-        /// </summary>
-        public void TestRun()
+        private class Server
         {
-            StoreData(new List<int>() { 1, 2, 3, 4, 5, 6 }, "global1", true);
-            StoreData("mystring", "global2", true);
-            StoreData(new TestClass() { A = "1", B = 2, C = 3.0 }, "global3", true);
-
-            List<int> global1 = GetData<List<int>>("global1", true);
-            string global2 = GetData<string>("global2", true);
-            TestClass global3 = GetData<TestClass>("global3", true);
-
-            StoreData(new List<bool>() { true, true, false }, "acnt1", false);
-            StoreData(12.44, "acnt2", false);
-            StoreData(new TestClass() { A = "zz", B = 3, C = 4.5 }, "acnt3", false);
-
-            List<bool> acnt1 = GetData<List<bool>>("acnt1", false);
-            double acnt2 = GetData<double>("acnt2", true);
-            TestClass acnt3 = GetData<TestClass>("acnt3", true);
+            public Dictionary<string, object> ServerGlobal { get; set; }
+            public Dictionary<string, Character> Characters { get; set; }
+            public Server()
+            {
+                ServerGlobal = new Dictionary<string, object>();
+                Characters = new Dictionary<string, Character>();
+            }
         }
 
-        /// <summary>
-        /// JSON Stucture
-        /// </summary>
-        private class Storage
+        private class Character : Dictionary<string, object>
         {
-            public Storage()
+            public Character() { }
+            public void AddSetting(string key, object value)
+            {
+                this[key] = value;
+            }
+        }
+
+        private class JSONRoot
+        {
+            public Dictionary<string, object> Global { get; set; }
+            public Dictionary<string, Server> Servers { get; set; }
+            public JSONRoot()
             {
                 Global = new Dictionary<string, object>();
-                Accounts = new Dictionary<string, Account>();
+                Servers = new Dictionary<string, Server>();
             }
+        }
 
-            [System.Serializable()]
-            public class Account
+        private readonly FileInfo _fileName;    // path of the JSON file
+        private readonly string _serverName;    // Name of the server
+        private readonly string _characterName; // Name of the account
+
+        /// <summary>
+        /// Initializes a new instance of the StoredData class.
+        /// </summary>
+        /// <param name="storedDataFolder">The folder path where the JSON file will be stored.</param>
+        /// <param name="serverName">The name of the server.</param>
+        /// <param name="characterName">The name of the character.</param>
+        public StoredData()
+        {
+            string _data_folder = Path.GetFullPath(Path.Combine(Assistant.Engine.RootPath, "Data"));
+            _fileName = new FileInfo(Path.Combine(_data_folder, "StoredData.json"));
+            _serverName = Misc.ShardName();
+            _characterName = Player.Name;
+
+            if (!Directory.Exists(_data_folder))
             {
-                public Account ()
-                {
-                    Data = new Dictionary<string, object>();
-                }
-                public Dictionary<string, object> Data { get; set; }
+                Directory.CreateDirectory(_data_folder);
             }
 
-            public Dictionary<string, object> Global { get; set; }
-            public Dictionary<string, Account> Accounts { get; set; }
+            if (!File.Exists(_fileName.FullName))
+            {
+                File.Create(_fileName.FullName).Close();
+            }
+
+            string jsonText = File.ReadAllText(_fileName.FullName);
+
+            bool save = false;
+            JSONRoot jsonObj = JsonConvert.DeserializeObject<JSONRoot>(jsonText);
+
+            if (jsonObj == null)
+            {
+                jsonObj = new JSONRoot();
+                save = true;
+            }
+
+            if (!jsonObj.Servers.ContainsKey(_serverName))
+            {
+                jsonObj.Servers[_serverName] = new Server();
+                save = true;
+            }
+
+            if (!jsonObj.Servers[_serverName].Characters.ContainsKey(_characterName))
+            {
+                jsonObj.Servers[_serverName].Characters[_characterName] = new Character();
+                save = true;
+            }
+
+            if (save)
+            {
+                jsonText = JsonConvert.SerializeObject(jsonObj, Formatting.Indented);
+                File.WriteAllText(_fileName.FullName, jsonText);
+            }
         }
 
         /// <summary>
-        /// Store an object as Json
+        /// Returns a string representation of the JSON data.
         /// </summary>
-        /// <param name="data">objet to be stored</param>
-        /// <param name="keyName">Name of the object stored</param>
-        /// <param name="global">If true this will be visible to all chars. If false will be specific per character</param>
-        public static void StoreData(object data, string keyName, bool global)
+        /// <returns>A string representation of the JSON data.</returns>
+        public override string ToString()
         {
-            string dataFolder = Path.GetFullPath(Path.Combine(Assistant.Engine.RootPath, "Data"));
-            if (!Directory.Exists(dataFolder))
-            {
-                Directory.CreateDirectory(dataFolder);
-            }
+            string jsonText = File.ReadAllText(_fileName.FullName);
+            JSONRoot jsonObj = JsonConvert.DeserializeObject<JSONRoot>(jsonText);
+            if (jsonObj == null) return "";
 
-            string jsonText = "";
-            string dataFile = Path.Combine(dataFolder, "StoredData.json");
-            if (File.Exists(dataFile))
-            {
-                jsonText = File.ReadAllText(dataFile);
-            }
+            return JsonConvert.SerializeObject(jsonObj, Formatting.Indented);
+        }
 
-            Storage jsonObj = JsonConvert.DeserializeObject<Storage>(jsonText);
-            if (jsonObj == null)
-            {
-                jsonObj = new Storage();
-            }
+        /// <summary>
+        /// Stores data in the JSON file based on the specified storage type.
+        /// </summary>
+        /// <param name="data">The data to store.</param>
+        /// <param name="keyName">The key name to associate with the data.</param>
+        /// <param name="storage">The storage type (Global, Server, or Character).</param>
+        public void StoreData(object data, string keyName, StoreType storage)
+        {
+            string jsonText = File.ReadAllText(_fileName.FullName);
+            JSONRoot jsonObj = JsonConvert.DeserializeObject<JSONRoot>(jsonText) ?? throw new Exception("Error reading JSON file");
 
-            if (global)
+            switch (storage)
             {
-                jsonObj.Global[keyName] = data;
-            }
-            else
-            {
-                if (jsonObj.Accounts.ContainsKey(Player.Name))
-                {
-                    jsonObj.Accounts[Player.Name].Data[keyName] = data;
-                } 
-                else
-                {
-                    Storage.Account newAccount = new Storage.Account();
-                    newAccount.Data[keyName] = data;
-                    jsonObj.Accounts.Add(Player.Name, newAccount);
-                }
-                
+                case StoreType.Global:
+                    jsonObj.Global[keyName] = data;
+                    break;
+                case StoreType.Server:
+                    jsonObj.Servers[_serverName].ServerGlobal[keyName] = data;
+                    break;
+                case StoreType.Character:
+                default:
+                    var character = jsonObj.Servers[_serverName].Characters[_characterName];
+                    character.AddSetting(keyName, data);
+                    break;
             }
 
             jsonText = JsonConvert.SerializeObject(jsonObj, Formatting.Indented);
-
-            File.WriteAllText(dataFile, jsonText);
+            File.WriteAllText(_fileName.FullName, jsonText);
         }
 
         /// <summary>
-        /// Gets data from JSON
+        /// Retrieves data from the JSON file based on the specified storage type.
         /// </summary>
-        /// <typeparam name="T">Returned object type</typeparam>
-        /// <param name="keyName">>Name of the object required</param>
-        /// <param name="global">If true this will be visible to all chars. If false will be specific per character</param>
-        /// <returns>Requested object</returns>
-        public static T GetData<T>(string keyName, bool global)
+        /// <typeparam name="T">The type of data to retrieve.</typeparam>
+        /// <param name="keyName">The key name associated with the data.</param>
+        /// <param name="storage">The storage type (Global, Server, or Character).</param>
+        /// <returns>The retrieved data or the default value if keyName doesn't exist.</returns>
+        public T GetData<T>(string keyName, StoreType storage)
         {
-            string dataFolder = Path.GetFullPath(Path.Combine(Assistant.Engine.RootPath, "Data"));
-            if (!Directory.Exists(dataFolder))
-            {
-                return default;
-            }
-
-            string dataFile = Path.Combine(dataFolder, "StoredData.json");
-            if (!File.Exists(dataFile))
-            {
-                return default;
-            }
-
-            string jsonText = File.ReadAllText(dataFile);
-            Storage jsonObj = JsonConvert.DeserializeObject<Storage>(jsonText);
-            if (jsonObj == null)
-            {
-                return default;
-            }
+            string jsonText = File.ReadAllText(_fileName.FullName);
+            JSONRoot jsonObj = JsonConvert.DeserializeObject<JSONRoot>(jsonText);
+            if (jsonObj == null) return default;
 
             object retVal;
 
-            if (global)
+            switch (storage)
             {
-                if (!jsonObj.Global.ContainsKey(keyName)) return default;
-                retVal = jsonObj.Global[keyName];
-            } 
-            else
-            {
-                if (!jsonObj.Accounts.ContainsKey(Player.Name)) return default;
-                if (!jsonObj.Accounts[Player.Name].Data.ContainsKey(keyName)) return default;
-                retVal = jsonObj.Accounts[Player.Name].Data[keyName];
+                case StoreType.Global:
+                    if (!jsonObj.Global.ContainsKey(keyName)) return default;
+                    retVal = jsonObj.Global[keyName];
+                    break;
+                case StoreType.Server:
+                    if (!jsonObj.Servers[_serverName].ServerGlobal.ContainsKey(keyName)) return default;
+                    retVal = jsonObj.Servers[_serverName].ServerGlobal[keyName];
+                    break;
+                case StoreType.Character:
+                default:
+                    if (!jsonObj.Servers[_serverName].Characters[_characterName].ContainsKey(keyName)) return default;
+                    retVal = jsonObj.Servers[_serverName].Characters[_characterName][keyName];
+                    break;
             }
 
             if (retVal is Newtonsoft.Json.Linq.JObject)
@@ -184,10 +198,7 @@ namespace Scripts.Libs
                 return j1.ToObject<T>();
             }
 
-            // Need help C# to convert the object to requested type
-            // Without this, if retVal = 0, there is an exception.
             return (T)Convert.ChangeType(retVal, typeof(T));
         }
     }
-
 }

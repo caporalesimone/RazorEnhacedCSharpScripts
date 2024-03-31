@@ -33,6 +33,7 @@ namespace BODS
         private const string json_secure_container = "SSBODsFiller_SecureContainer"; // JSON Key with the latest secure container serial
         private const string json_tailor_talisman = "SSBODsFiller_TailorTalisman";   // JSON Key with the latest tailoring talisman serial
         private const string json_blacksmith_talisman = "SSBODsFiller_BlackSmithTalisman";   // JSON Key with the latest blacksmithy talisman serial
+        private readonly StoredData json_storedData = new StoredData();
 
         private const int delayUseItem = 600;
         private const int delayDragItem = 600;
@@ -82,7 +83,7 @@ namespace BODS
         {
             InitializeComponent();
             this.Text = scriptName + " - " + Player.Name;
-            secureResourceContainerSerial = StoredData.GetData<int>(json_secure_container, false);
+            secureResourceContainerSerial = json_storedData.GetData<int>(json_secure_container, StoredData.StoreType.Character);
 
             if (secureResourceContainerSerial != 0)
             {
@@ -92,11 +93,11 @@ namespace BODS
                     lblSecureContainer.Text = target.Properties[0].ToString();
                 }
             }
-
-            talismanTailoringSerial = StoredData.GetData<int>(json_tailor_talisman, false);
+            
+            talismanTailoringSerial = json_storedData.GetData<int>(json_tailor_talisman, StoredData.StoreType.Character);
             lblTailoringTalisman.Text = (talismanTailoringSerial == 0) ? "NO" : "YES"; 
             
-            talismanBlackSmithSerial = StoredData.GetData<int>(json_blacksmith_talisman, false);
+            talismanBlackSmithSerial = json_storedData.GetData<int>(json_blacksmith_talisman, StoredData.StoreType.Character);
             lblBlackSmithyTalisman.Text = (talismanBlackSmithSerial == 0) ? "NO" : "YES";
         }
         public void Run()
@@ -527,7 +528,7 @@ namespace BODS
                     secureResourceContainerSerial = target.Serial;
                     lblSecureContainer.Text = target.Properties[0].ToString();
                     targetValid = true;
-                    StoredData.StoreData(secureResourceContainerSerial, json_secure_container, false);
+                    json_storedData.StoreData(secureResourceContainerSerial, json_secure_container, StoredData.StoreType.Character);
                 }
                 else
                 {
@@ -536,7 +537,7 @@ namespace BODS
                         secureResourceContainerSerial = Player.Backpack.Serial;
                         lblSecureContainer.Text = "Player's Backpack";
                         targetValid = true;
-                        StoredData.StoreData(secureResourceContainerSerial, json_secure_container, false);
+                        json_storedData.StoreData(secureResourceContainerSerial, json_secure_container, StoredData.StoreType.Character);
                     }
                     else
                     {
@@ -643,7 +644,7 @@ namespace BODS
                 }
 
                 talismanTailoringSerial = talismanSerial;
-                StoredData.StoreData(talismanTailoringSerial, json_tailor_talisman, false);
+                json_storedData.StoreData(talismanTailoringSerial, json_tailor_talisman, StoredData.StoreType.Character);
                 lblTailoringTalisman.Text = "YES";
             }
         }
@@ -689,7 +690,7 @@ namespace BODS
                 }
 
                 talismanBlackSmithSerial = talismanSerial;
-                StoredData.StoreData(talismanBlackSmithSerial, json_blacksmith_talisman, false);
+                json_storedData.StoreData(talismanBlackSmithSerial, json_blacksmith_talisman, StoredData.StoreType.Character);
                 lblBlackSmithyTalisman.Text = "YES";
             }
         }
