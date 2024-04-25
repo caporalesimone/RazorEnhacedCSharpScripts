@@ -3,18 +3,19 @@ using System.Collections.Generic;
 
 //#forcedebug
 //#import <../Libs/stored_data.cs>
+//#import <../Libs/loot_container.cs>
 
 namespace RazorEnhanced
 {
-    internal class LootChest
+    internal class LockpickChest
     {
-        private int LOCKPICK_DELAY = 1000;
-        private int REMOVE_TRAP_DELAY = 10000;
-        private int MOVE_ITEMS_DELAY = 500;
+        private const int LOCKPICK_DELAY = 1000;
+        private const int REMOVE_TRAP_DELAY = 10000;
+        private const int MOVE_ITEMS_DELAY = 600;
 
         private readonly StoredData json_storedData = new StoredData();
 
-        public LootChest()
+        public LockpickChest()
         {
         }
 
@@ -44,6 +45,13 @@ namespace RazorEnhanced
                 return;
             }
 
+            Misc.Pause(300);
+
+            //TODO: Check if chest is locked looking the properties.
+            //or if contains items number then i think is alredy lockpicked
+            //if chest.Properties
+
+
             bool result = LockPickChest(chestSerial);
             if (result == false)
             {
@@ -51,7 +59,7 @@ namespace RazorEnhanced
                 return;
             };
 
-            Misc.Pause(1000);
+            Misc.Pause(1500);
 
             result = RemoveTrap(chestSerial);
             if (result == false)
@@ -61,7 +69,11 @@ namespace RazorEnhanced
             };
 
             Misc.Pause(1000);
-            LootTheChest(chest);
+
+            LootContainer loot = new LootContainer();
+            loot.Loot(chestSerial);
+
+            //LootTheChest(chest);
         }
 
         private static int Distance(Point3D from, Point3D to)
@@ -84,7 +96,7 @@ namespace RazorEnhanced
             double skill = Player.GetSkillValue("Lockpicking");
             if (skill < 100)
             {
-                Player.HeadMessage(33, "Less than 100 in lockpicking, better to train the skill");
+                Misc.SendMessage("Less than 100 in lockpicking, better to train the skill", 33);
             }
 
             Journal journal = new Journal();
