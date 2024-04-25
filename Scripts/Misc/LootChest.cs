@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace RazorEnhanced
 {
-    internal class LootChests
+    internal class LootChest
     {
         private int LOCKPICK_DELAY = 1000;
         private int REMOVE_TRAP_DELAY = 10000;
@@ -14,7 +14,7 @@ namespace RazorEnhanced
 
         private readonly StoredData json_storedData = new StoredData();
 
-        public LootChests()
+        public LootChest()
         {
         }
 
@@ -61,7 +61,7 @@ namespace RazorEnhanced
             };
 
             Misc.Pause(1000);
-            LootChest(chest);
+            LootTheChest(chest);
         }
 
         private static int Distance(Point3D from, Point3D to)
@@ -168,7 +168,7 @@ namespace RazorEnhanced
             return false;
         }
 
-        private void LootChest(Item chest)
+        private void LootTheChest(Item chest)
         {
             List<int> lootList = new List<int>() {
                 0x0EED, // Gold
