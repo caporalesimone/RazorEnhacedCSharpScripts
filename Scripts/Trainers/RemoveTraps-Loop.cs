@@ -7,7 +7,7 @@ namespace RazorEnhanced
 {
     internal class RemoveTrapsLoop
     {
-        private readonly uint gumpID = 1081473245;
+        private readonly uint gumpID = 946198531;
 
         private class Cell
         {
@@ -67,7 +67,7 @@ namespace RazorEnhanced
         private void RemoveTrap(int trapSerial)
         {
             Player.UseSkill("Remove Trap");
-            Target.WaitForTarget(1000, false);
+            Target.WaitForTarget(6000, false);
             Target.TargetExecute(trapSerial);
 
             Gumps.WaitForGump(gumpID, 5000);
