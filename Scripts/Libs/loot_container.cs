@@ -17,7 +17,7 @@ namespace RazorEnhanced
     internal class LootContainer
     {
         private const int CHEST_MAX_DISTANCE = 1;
-        private const int MOVE_ITEMS_DELAY = 600;
+        private const int MOVE_ITEMS_DELAY = 700;
         private readonly StoredData json_storedData = new StoredData();
 
         private readonly int lootBagSerial = 0;
@@ -72,20 +72,25 @@ namespace RazorEnhanced
                 wantedLootList.AddRange(charList);
             }
 
+            wantedLootList.Clear();
             // If there is no loot list, add a default one
-            if (wantedLootList.Count == 0)
+            if (wantedLootList.Count <= 0)
             {
-                wantedLootList.Add(new LootInfo(0x0F10)); // Emerald
-                wantedLootList.Add(new LootInfo(0x0F13)); // Ruby
-                wantedLootList.Add(new LootInfo(0x0F15)); // Citrine
-                wantedLootList.Add(new LootInfo(0x0F16)); // Amethyst
-                wantedLootList.Add(new LootInfo(0x0F11)); // Sapphire
-                wantedLootList.Add(new LootInfo(0x0F19)); // Sapphire
-                wantedLootList.Add(new LootInfo(0x0F0F)); // Star sapphire
-                wantedLootList.Add(new LootInfo(0x0F21)); // Star sapphire
-                wantedLootList.Add(new LootInfo(0x0F25)); // Amber
-                wantedLootList.Add(new LootInfo(0x0F26)); // Diamond
-                wantedLootList.Add(new LootInfo(0x0F18)); // Tourmaline
+                wantedLootList.Add(new LootInfo(0x0F0F) { Name = "Star Sapphire" });
+                wantedLootList.Add(new LootInfo(0x0F10) { Name = "Emerald" });
+                wantedLootList.Add(new LootInfo(0x0F11) { Name = "Sapphire" });
+                wantedLootList.Add(new LootInfo(0x0F13) { Name = "Ruby" });
+                wantedLootList.Add(new LootInfo(0x0F15) { Name = "Citrine" });
+                wantedLootList.Add(new LootInfo(0x0F16) { Name = "Amethyst" });
+                wantedLootList.Add(new LootInfo(0x0F18) { Name = "Tourmaline" });
+                wantedLootList.Add(new LootInfo(0x0F19) { Name = "Sapphire" });
+                wantedLootList.Add(new LootInfo(0x0F21) { Name = "Star Sapphire" });
+                wantedLootList.Add(new LootInfo(0x0F25) { Name = "Amber" });
+                wantedLootList.Add(new LootInfo(0x0F26) { Name = "Diamond" });
+
+                wantedLootList.Add(new LootInfo(0x0EF3) { Name = "Blank Scroll" });
+                wantedLootList.Add(new LootInfo(0x1F59) { Name = "Mark" });
+                wantedLootList.Add(new LootInfo(0x1F41) { Name = "Telekinesis" });
 
                 json_storedData.StoreData(wantedLootList, "LootChest.LootList", StoredData.StoreType.Server);
 
@@ -97,7 +102,7 @@ namespace RazorEnhanced
                 };
 
                 json_storedData.StoreData(charSpecificList, "LootChest.LootList", StoredData.StoreType.Character);
-                wantedLootList.Concat(charSpecificList);
+                wantedLootList.AddRange(charSpecificList);
             }
         }
 
@@ -136,9 +141,10 @@ namespace RazorEnhanced
             }
 
             Items.UseItem(chest);
-            Misc.Pause(1000);
+            Misc.Pause(800);
 
             List<Item> chestItems = FindItems(chest, true);
+            Misc.Pause(200);
 
             foreach (Item loot in chestItems)
             {
@@ -197,33 +203,25 @@ namespace RazorEnhanced
                 bool validName = false;
                 bool validProperties = false;
 
-                // If ItemID is 0 means Ignore ItemID so it will pass
-                // If a specific ID is set, check if the item ID is the same
-                if (lootInfo.ItemID == item.ItemID)
+                // If ID is 0 means Ignore ID so it will pass
+                if (lootInfo.ItemID == 0) validID = true;
+                // If Name is empty means Ignore Name so it will pass
+                if (string.IsNullOrEmpty(lootInfo.Name)) validID = true;
+                // If no properties means Ignore Properties so it will pass
+                if (lootInfo.Properties.Count == 0) validProperties = true;
+
+                if ((lootInfo.ItemID == item.ItemID) || (lootInfo.ItemID == 0))
                 {
                     validID = true;
-                } 
+                }
 
                 if (lootInfo.Name != "" && item.Name.ToLower().Contains(lootInfo.Name.ToLower()))
                 {
                     validName = true;
                 }
 
-                // If Name is empty means Ignore Name so it will pass
-                // If a specific name is set, check if the item name contains it (case insensitive)
                 /*
-                if (string.IsNullOrEmpty(lootInfo.Name) ||
-                    item.Name.ToLower().Contains(lootInfo.Name.ToLower()) )
-                {
-                    validName = false;
-                }
-                */
-
-                /*
-                if (lootInfo.Properties.Count == 0)
-                {
-                    validProperties = true;
-                }
+                
                 */
                 /*
                 if (lootInfo.Properties.Count > 0)
@@ -245,7 +243,7 @@ namespace RazorEnhanced
                 }
                 */
 
-                if ((validID == true) || (validName == true) || (validProperties == true))
+                if ((validID == true) && (validName == true) && (validProperties == true))
                 {
                     return true;
                 }

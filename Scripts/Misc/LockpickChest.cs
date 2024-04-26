@@ -12,6 +12,8 @@ namespace RazorEnhanced
         private const int LOCKPICK_DELAY = 1000;
         private const int REMOVE_TRAP_DELAY = 10000;
         private const int MOVE_ITEMS_DELAY = 600;
+        private const int LOCKPICK_TENTATIVES = 3;
+        private const int REMOVE_TRAP_TENTATIVES = 3;
 
         private readonly StoredData json_storedData = new StoredData();
 
@@ -47,22 +49,19 @@ namespace RazorEnhanced
 
             Misc.Pause(300);
 
-            //TODO: Check if chest is locked looking the properties.
-            //or if contains items number then i think is alredy lockpicked
-            //if chest.Properties
-
-
-            bool result = LockPickChest(chestSerial);
-            if (result == false)
+            if (chest.Properties.Count <= 1)
             {
-                Player.HeadMessage(33, "You failed to lockpick");
-                return;
-            };
+                bool lockpicked = LockPickChest(chestSerial);
+                if (lockpicked == false)
+                {
+                    Player.HeadMessage(33, "You failed to lockpick");
+                    return;
+                };
+                Misc.Pause(1500);
+            }
 
-            Misc.Pause(1500);
-
-            result = RemoveTrap(chestSerial);
-            if (result == false)
+            bool trapRemoved = RemoveTrap(chestSerial);
+            if (trapRemoved == false)
             {
                 Player.HeadMessage(33, "You failed to remove the trap");
                 return;
@@ -72,8 +71,6 @@ namespace RazorEnhanced
 
             LootContainer loot = new LootContainer();
             loot.Loot(chestSerial);
-
-            //LootTheChest(chest);
         }
 
         private static int Distance(Point3D from, Point3D to)
@@ -101,7 +98,7 @@ namespace RazorEnhanced
 
             Journal journal = new Journal();
             Player.HeadMessage(50, "Lockpicking the chest");
-            for (int i = 10; i >= 0; --i)
+            for (int i = LOCKPICK_TENTATIVES; i > 0; --i)
             {
                 journal.Clear();
                 Items.UseItem(lockpick.Serial);
@@ -152,7 +149,7 @@ namespace RazorEnhanced
 
             Journal journal = new Journal();
 
-            for(int i = 10; i >= 0; --i)
+            for(int i = REMOVE_TRAP_TENTATIVES; i > 0; --i)
             {
                 journal.Clear();
                 Player.UseSkill("Remove Trap");
@@ -178,52 +175,6 @@ namespace RazorEnhanced
             }
 
             return false;
-        }
-
-        private void LootTheChest(Item chest)
-        {
-            List<int> lootList = new List<int>() {
-                0x0EED, // Gold
-                0x0F10, // Emerald
-                0x0F13, // Ruby
-                0x0F15, // Citrine
-                0x0F16, // Amethyst
-                0x0F11, 0x0F19, // Sapphire
-                0x0F0F, 0x0F21, // Star sapphire
-                0x0F25, // Amber
-                0x0F26, // Diamond
-                0x0F18, 0x0F2D, // Tourmaline
-            };
-
-            int lootBagSerial = json_storedData.GetData<int>("LootChest.LootBagSerial", StoredData.StoreType.Character);
-            if (lootBagSerial == 0)
-            {
-                Player.HeadMessage(33, "Select a loot bag");
-                Item lootBag = Items.FindBySerial(new Target().PromptTarget());
-                lootBagSerial = lootBag.Serial;
-                if (lootBag == null || !lootBag.IsContainer)
-                {
-                    Player.HeadMessage(33, "Invalid loot bag selected. Using Backpack this time");
-                    lootBagSerial = Player.Backpack.Serial;
-                } 
-                else
-                {
-                    json_storedData.StoreData(lootBagSerial, "LootChest.LootBagSerial", StoredData.StoreType.Character);
-                }
-            }
-
-            Items.UseItem(chest);
-            Misc.Pause(1000);
-
-            foreach (var loot in chest.Contains)
-            {
-                if (lootList.Contains(loot.ItemID))
-                {
-                    Player.HeadMessage(33, "Looting: " + loot.Name);
-                    Items.Move(loot.Serial, lootBagSerial, 0);
-                    Misc.Pause(MOVE_ITEMS_DELAY);
-                }
-            }
         }
     }
 }
