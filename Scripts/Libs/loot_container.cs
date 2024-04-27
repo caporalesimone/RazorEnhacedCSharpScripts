@@ -25,9 +25,20 @@ namespace RazorEnhanced
 
         private class LootInfo
         {
+            public class Property
+            {
+                public string Name { get; set; } = "";
+                public string Value { get; set; } = "";
+                public Property(string Name, string Value) 
+                {
+                    this.Name = Name;
+                    this.Value = Value;
+                }
+            }
+
             public int ItemID { get; set; } = 0;
             public string Name { get; set; } = "";
-            public List<(string, string)> Properties { get; set; } = new List<(string, string)>();
+            public List<Property> Properties { get; set; } = new List<Property>();
             public LootInfo() { }
             public LootInfo(int itemID)
             {
@@ -35,7 +46,7 @@ namespace RazorEnhanced
             }
             public void AddProperty(string property, string value)
             {
-                Properties.Add((property, value));
+                Properties.Add(new Property(property, value));
             }
         }
 
@@ -72,7 +83,8 @@ namespace RazorEnhanced
                 wantedLootList.AddRange(charList);
             }
 
-            wantedLootList.Clear();
+            //wantedLootList.Clear(); // TODO: Remove this line when you have finished testing. only for debug
+
             // If there is no loot list, add a default one
             if (wantedLootList.Count <= 0)
             {
@@ -98,35 +110,23 @@ namespace RazorEnhanced
                 // This is just an example of how to add items to the character specific list.
                 var charSpecificList = new List<LootInfo>
                 {
-                    new LootInfo() { Name = "Gold Coin" } // Gold
+                    new LootInfo() { Name = "Gold Coin" }, // Gold
+                    new LootInfo() { Name = "Bracelet", Properties = new List<LootInfo.Property> { new LootInfo.Property("Lesser Artifact","")} } // Bracelet
                 };
+
+                //charSpecificList.Add(new LootInfo() { Name = "Bracelet" });
+                //charSpecificList.Last().AddProperty("test", "prova");
 
                 json_storedData.StoreData(charSpecificList, "LootChest.LootList", StoredData.StoreType.Character);
                 wantedLootList.AddRange(charSpecificList);
             }
         }
 
-        /*
-        public void Run()
-        {
-            Target target = new Target();
-
-            Player.HeadMessage(50, "Target a Chest");
-
-            int chestSerial = target.PromptTarget();
-            if (chestSerial == 0)
-            {
-                Player.HeadMessage(33, "No target selected");
-                return;
-            }
-
-            Loot(chestSerial);
-        }
-        */
-
         // Must be public so can be called from other scripts
         public bool Loot(int chestSerial)
         {
+            Player.HeadMessage(50, "Starting Looting");
+
             Item chest = Items.FindBySerial(chestSerial);
             if (chest == null || !chest.IsContainer)
             {
@@ -163,7 +163,7 @@ namespace RazorEnhanced
             int xDelta = Math.Abs(from.X - to.X);
             int yDelta = Math.Abs(from.Y - to.Y);
 
-            return (xDelta > yDelta ? xDelta : yDelta);
+            return xDelta > yDelta ? xDelta : yDelta;
         }
 
         private List<Item> FindItems(Item container, bool recursive = true)
@@ -220,28 +220,35 @@ namespace RazorEnhanced
                     validName = true;
                 }
 
-                /*
-                
-                */
-                /*
                 if (lootInfo.Properties.Count > 0)
                 {
-                    bool found = false;
-                    foreach ((string, string) property in lootInfo.Properties)
+                    int cntValidProps = 0;
+                    foreach (LootInfo.Property property in lootInfo.Properties)
                     {
-                        if (item.Properties.Any(prop => prop.ToString().Contains(property.Item1) && prop.ToString().Contains(property.Item2)))
+                        if (item.Properties.Any(prop => prop.ToString().ToLower().Contains(property.Name.ToLower())))
                         {
-                            found = true;
-                            break;
+                            // Property without a value then take it withot any other check
+                            if (string.IsNullOrEmpty(property.Value))
+                            {
+                                cntValidProps++;
+                                continue;
+                            }
+
+                            // Property with a value then check the value
+                            var value = Items.GetPropValue(item.Serial, property.Name);
+                            var parsed = double.TryParse(property.Value, out double searchValue);
+                            if (parsed && (value >= searchValue))
+                            {
+                                cntValidProps++;
+                                continue;
+                            }
                         }
                     }
-
-                    if (!found)
+                    if (cntValidProps == lootInfo.Properties.Count)
                     {
-                        continue;
+                        validProperties = true;
                     }
                 }
-                */
 
                 if ((validID == true) && (validName == true) && (validProperties == true))
                 {

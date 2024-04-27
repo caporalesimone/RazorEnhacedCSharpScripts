@@ -11,7 +11,6 @@ namespace RazorEnhanced
     {
         private const int LOCKPICK_DELAY = 1000;
         private const int REMOVE_TRAP_DELAY = 10000;
-        private const int MOVE_ITEMS_DELAY = 600;
         private const int LOCKPICK_TENTATIVES = 3;
         private const int REMOVE_TRAP_TENTATIVES = 3;
 
@@ -49,6 +48,7 @@ namespace RazorEnhanced
 
             Misc.Pause(300);
 
+            // If chest has only the name without any other property, it's locked
             if (chest.Properties.Count <= 1)
             {
                 bool lockpicked = LockPickChest(chestSerial);
