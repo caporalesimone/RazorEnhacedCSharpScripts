@@ -114,7 +114,7 @@ namespace RazorEnhanced
 
                         var item = ParseProperties(itm.Properties.Select(p =>
                         {
-                            string propName = p.ToString().ToLower();
+                            string propName = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(p.ToString().ToLower());
                             var skip = new[] { "crafted by", "recovered from" };
                             if (skip.Any(propName.Contains)) return null; // Skiping unuseful properties
                             return propName;
@@ -148,11 +148,12 @@ namespace RazorEnhanced
 
                     foreach (var prop in item.Properties)
                     {
-                        if (!table.Columns.Contains(prop.PropertyName))
+                        string colName = prop.PropertyName + (prop.IsPercent ? " %" : "");
+                        if (!table.Columns.Contains(colName))
                         {
-                            table.Columns.Add(prop.PropertyName, prop.Value == null ? typeof(bool) : prop.Value.GetType());
+                            table.Columns.Add(colName, prop.IsFlag == true ? typeof(bool) : prop.Value.GetType());
                         }
-                        row[prop.PropertyName] = (prop.Value == null) ? true : prop.Value;
+                        row[colName] = (prop.IsFlag) ? true : prop.Value;
                     }
 
                     table.Rows.Add(row);
@@ -179,22 +180,6 @@ namespace RazorEnhanced
                     var v = 0;
                     //row.Cells["Quality"].Style.Font = new System.Drawing.Font(font, System.Drawing.FontStyle.Bold);
                 }
-
-                /*
-                foreach (DataGridViewColumn col in dataGrid.Columns)
-                {
-                    foreach (var key in replace_str)
-                    {
-                        if (key.Value.Item1 == col.Name)
-                        {
-                            col.ToolTipText = Regex.Replace(key.Key, @"(^\w)|(\s\w)", m => m.Value.ToUpper(), RegexOptions.Compiled);
-                            col.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-                            continue;
-                        }
-                    }
-                }
-                */
-
             }
 
         }
@@ -259,14 +244,15 @@ namespace RazorEnhanced
             Items.Move(Convert.ToInt32(serial, 16), Player.Backpack.Serial, 1);
         }
 
-
         private class UOObject
         {
             public class ObjectProperty
             {
                 public string PropertyName { get; set; }
-                public string Value { get; set; } = null;
-                public string MaxValue { get; set; } = null;
+                public int Value { get; set; } = 0;
+                public int MaxValue { get; set; } = 0;
+                public bool IsFlag { get; set; }
+                public bool IsPercent { get; set;}
             }
 
             public string Serial { get; set; }
@@ -278,15 +264,16 @@ namespace RazorEnhanced
 
         private static UOObject ParseProperties(List<string> properties)
         {
-            UOObject uoObject = new UOObject();
-
-            // Set Name
-            uoObject.Name = properties[0];
+            UOObject uoObject = new()
+            {
+                Name = properties[0] // Set Name
+            };
 
             // Set Quality and QualityColor
             string lastProperty = properties[properties.Count - 1];
-            if (lastProperty.Contains("<basefont"))
+            if (lastProperty.ToLower().Contains("<basefont"))
             {
+                lastProperty = lastProperty.ToLower();
                 int start = lastProperty.IndexOf(">") + 1;
                 int end = lastProperty.Length;
                 uoObject.Quality = lastProperty.Substring(start, end - start).Trim();
@@ -307,21 +294,26 @@ namespace RazorEnhanced
             for (int i = 1; i < numProperties; i++)
             {
                 string property = properties[i];
-                UOObject.ObjectProperty objectProperty = new UOObject.ObjectProperty();
-
-                // Set PropertyName
-                objectProperty.PropertyName = Regex.Match(property, @"^[^\d:+-]+").Value.Trim();
+                UOObject.ObjectProperty objectProperty = new()
+                {
+                    PropertyName = Regex.Match(property, @"^[^\d:+-]+").Value.Trim(), // Set PropertyName
+                    IsFlag = true, // Set IsBoolean by default true
+                    IsPercent = property.Contains("%")
+                };
 
                 // Set Value and MaxValue
                 MatchCollection matches = Regex.Matches(property, @"[-+]?\d+");
                 if (matches.Count == 1)
                 {
-                    objectProperty.Value = property.EndsWith("%") ? matches[0].Value + "%" : matches[0].Value;
+                    //objectProperty.Value = property.EndsWith("%") ? matches[0].Value + "%" : matches[0].Value;
+                    objectProperty.Value = int.Parse(matches[0].Value);
+                    objectProperty.IsFlag = false;
                 }
                 else if (matches.Count == 2)
                 {
-                    objectProperty.Value = matches[0].Value;
-                    objectProperty.MaxValue = matches[1].Value;
+                    objectProperty.Value = int.Parse(matches[0].Value);
+                    objectProperty.MaxValue = int.Parse(matches[1].Value);
+                    objectProperty.IsFlag = false;
                 }
 
                 uoObject.Properties.Add(objectProperty);
