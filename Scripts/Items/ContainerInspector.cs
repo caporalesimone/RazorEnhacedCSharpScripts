@@ -33,6 +33,7 @@ namespace RazorEnhanced
 
         private System.Drawing.Font defaultFontRegular = new System.Drawing.Font("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
         private PictureBox pictureBoxSelectedObj;
+        private ListBox selectedPropList;
         private System.Drawing.Font defaultFontBold = new System.Drawing.Font("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 
         public ContainerInspector()
@@ -55,6 +56,7 @@ namespace RazorEnhanced
             this.dataGrid = new System.Windows.Forms.DataGridView();
             this.cmdGetSelected = new System.Windows.Forms.Button();
             this.pictureBoxSelectedObj = new System.Windows.Forms.PictureBox();
+            this.selectedPropList = new System.Windows.Forms.ListBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSelectedObj)).BeginInit();
             this.SuspendLayout();
@@ -72,10 +74,10 @@ namespace RazorEnhanced
             // dataGrid
             // 
             this.dataGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGrid.Location = new System.Drawing.Point(14, 44);
+            this.dataGrid.Location = new System.Drawing.Point(174, 44);
             this.dataGrid.Name = "dataGrid";
             this.dataGrid.RowHeadersWidth = 51;
-            this.dataGrid.Size = new System.Drawing.Size(1037, 551);
+            this.dataGrid.Size = new System.Drawing.Size(877, 547);
             this.dataGrid.TabIndex = 1;
             this.dataGrid.SelectionChanged += new System.EventHandler(this.DataGrid_SelectionChanged);
             // 
@@ -91,16 +93,27 @@ namespace RazorEnhanced
             // 
             // pictureBoxSelectedObj
             // 
-            this.pictureBoxSelectedObj.Location = new System.Drawing.Point(268, 6);
+            this.pictureBoxSelectedObj.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.pictureBoxSelectedObj.Location = new System.Drawing.Point(57, 55);
             this.pictureBoxSelectedObj.Name = "pictureBoxSelectedObj";
-            this.pictureBoxSelectedObj.Size = new System.Drawing.Size(32, 32);
-            this.pictureBoxSelectedObj.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxSelectedObj.Size = new System.Drawing.Size(50, 50);
+            this.pictureBoxSelectedObj.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
             this.pictureBoxSelectedObj.TabIndex = 3;
             this.pictureBoxSelectedObj.TabStop = false;
+            // 
+            // selectedPropList
+            // 
+            this.selectedPropList.FormattingEnabled = true;
+            this.selectedPropList.ItemHeight = 16;
+            this.selectedPropList.Location = new System.Drawing.Point(13, 123);
+            this.selectedPropList.Name = "selectedPropList";
+            this.selectedPropList.Size = new System.Drawing.Size(155, 468);
+            this.selectedPropList.TabIndex = 4;
             // 
             // ContainerInspector
             // 
             this.ClientSize = new System.Drawing.Size(1063, 607);
+            this.Controls.Add(this.selectedPropList);
             this.Controls.Add(this.pictureBoxSelectedObj);
             this.Controls.Add(this.cmdGetSelected);
             this.Controls.Add(this.dataGrid);
@@ -111,6 +124,7 @@ namespace RazorEnhanced
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSelectedObj)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -267,6 +281,7 @@ namespace RazorEnhanced
             var row = dataGrid.SelectedRows;
             string serial = row[0].Cells["Serial"].Value.ToString();
             Items.Move(Convert.ToInt32(serial, 16), Player.Backpack.Serial, 1);
+            dataGrid.Rows.Remove(row[0]);
         }
 
         private class UOObject
@@ -287,7 +302,6 @@ namespace RazorEnhanced
             public string QualityColor { get; set; }
             public List<ObjectProperty> Properties { get; set; } = new List<ObjectProperty>();
         }
-
         private static UOObject ParseProperties(List<string> properties)
         {
             UOObject uoObject = new()
@@ -355,7 +369,20 @@ namespace RazorEnhanced
                 {
                     Item selected = Items.FindBySerial(Convert.ToInt32(dataGrid.SelectedRows[0].Cells["Serial"].Value.ToString(), 16));
                     pictureBoxSelectedObj.Image = Items.GetImage(selected.ItemID);
-                    pictureBoxSelectedObj.SizeMode = PictureBoxSizeMode.StretchImage;
+                    //pictureBoxSelectedObj.SizeMode = PictureBoxSizeMode.StretchImage;
+
+                    selectedPropList.Items.Clear();
+                    foreach (var prop in selected.Properties)
+                    {
+                        string rawProp = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(prop.ToString().ToLower());
+                        if (rawProp.ToLower().Contains("<basefont"))
+                        {
+                            int start = rawProp.IndexOf(">") + 1;
+                            int end = rawProp.Length;
+                            rawProp = rawProp.Substring(start, end - start).Trim();
+                        }
+                        selectedPropList.Items.Add(rawProp);
+                    }
                 }
                 catch
                 {
