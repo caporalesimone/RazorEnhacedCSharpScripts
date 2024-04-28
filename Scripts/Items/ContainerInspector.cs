@@ -31,6 +31,9 @@ namespace RazorEnhanced
         private readonly List<object> lstData = new List<object>();
         private Item container;
 
+        private System.Drawing.Font defaultFontRegular = new System.Drawing.Font("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+        private System.Drawing.Font defaultFontBold = new System.Drawing.Font("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+
         public ContainerInspector()
         {
             InitializeComponent();
@@ -104,6 +107,7 @@ namespace RazorEnhanced
             {
                 Items.UseItem(container);
                 Misc.Pause(800);
+                Player.HeadMessage(33, "Scanning container...");
                 var found = FindItems(container, true);
                 if (found != null && found.Count > 0)
                 {
@@ -125,6 +129,7 @@ namespace RazorEnhanced
                     }
                 }
 
+                Player.HeadMessage(33, "Creating Table...");
                 if (lstData.Count == 0)
                 {
                     Misc.SendMessage("Nothing found", 33);
@@ -138,6 +143,7 @@ namespace RazorEnhanced
                 table.Columns.Add("Quality", typeof(string));
                 table.Columns.Add("QualityColor", typeof(string));
 
+                Player.HeadMessage(33, "Updating Columns...");
                 foreach (UOObject item in lstData.Cast<UOObject>())
                 {
                     DataRow row = table.NewRow();
@@ -160,12 +166,14 @@ namespace RazorEnhanced
                 }
 
 
+                dataGrid.Visible = false;
                 dataGrid.DataSource = table;
                 dataGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 dataGrid.ReadOnly = true;
 
-
+                Player.HeadMessage(33, "Last Fixes...");
                 dataGrid.Columns["QualityColor"].Visible = false;
+
                 foreach (DataGridViewRow row in dataGrid.Rows)
                 {
                     if (row.Cells["Serial"].Value == null)
@@ -176,10 +184,10 @@ namespace RazorEnhanced
 
                     if (row.Cells["QualityColor"].Value.ToString() == "") continue;
                     row.Cells["Quality"].Style.ForeColor = System.Drawing.ColorTranslator.FromHtml(row.Cells["QualityColor"].Value.ToString());
-                    var font = row.Cells["Quality"].Style.Font;
-                    var v = 0;
-                    //row.Cells["Quality"].Style.Font = new System.Drawing.Font(font, System.Drawing.FontStyle.Bold);
                 }
+
+                dataGrid.Columns["Quality"].DefaultCellStyle.Font = defaultFontBold;
+                dataGrid.Visible = true;
             }
 
         }
@@ -224,7 +232,11 @@ namespace RazorEnhanced
             pi.SetValue(dataGrid, true, null);
 
             dataGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells; // Imposta la larghezza delle colonne in modo che contenga tutto il testo
-            dataGrid.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGrid.ColumnHeadersDefaultCellStyle.Font = defaultFontBold;
+            dataGrid.Font = defaultFontRegular;
+            dataGrid.BackgroundColor = System.Drawing.Color.DarkGray;
+            dataGrid.DefaultCellStyle.ForeColor = System.Drawing.Color.White;
+            dataGrid.DefaultCellStyle.BackColor = System.Drawing.Color.Black;
             dataGrid.ReadOnly = true;
         }
 
@@ -273,14 +285,13 @@ namespace RazorEnhanced
             string lastProperty = properties[properties.Count - 1];
             if (lastProperty.ToLower().Contains("<basefont"))
             {
-                lastProperty = lastProperty.ToLower();
                 int start = lastProperty.IndexOf(">") + 1;
                 int end = lastProperty.Length;
                 uoObject.Quality = lastProperty.Substring(start, end - start).Trim();
 
-                int colorStart = lastProperty.IndexOf("color=") + 6;
+                int colorStart = lastProperty.ToLower().IndexOf("color=") + 6;
                 int colorEnd = lastProperty.IndexOf(">");
-                uoObject.QualityColor = lastProperty.Substring(colorStart, colorEnd - colorStart);
+                uoObject.QualityColor = lastProperty.Substring(colorStart, colorEnd - colorStart).ToLower();
             }
             else
             {
@@ -288,7 +299,7 @@ namespace RazorEnhanced
                 uoObject.QualityColor = null;
             }
 
-            int numProperties = lastProperty.Contains("<basefont") ? properties.Count - 1 : properties.Count;
+            int numProperties = lastProperty.ToLower().Contains("<basefont") ? properties.Count - 1 : properties.Count;
 
             // Set Properties
             for (int i = 1; i < numProperties; i++)
