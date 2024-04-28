@@ -32,6 +32,7 @@ namespace RazorEnhanced
         private Item container;
 
         private System.Drawing.Font defaultFontRegular = new System.Drawing.Font("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+        private PictureBox pictureBoxSelectedObj;
         private System.Drawing.Font defaultFontBold = new System.Drawing.Font("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 
         public ContainerInspector()
@@ -53,7 +54,9 @@ namespace RazorEnhanced
             this.cmdScanContainer = new System.Windows.Forms.Button();
             this.dataGrid = new System.Windows.Forms.DataGridView();
             this.cmdGetSelected = new System.Windows.Forms.Button();
+            this.pictureBoxSelectedObj = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSelectedObj)).BeginInit();
             this.SuspendLayout();
             // 
             // cmdScanContainer
@@ -69,11 +72,12 @@ namespace RazorEnhanced
             // dataGrid
             // 
             this.dataGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGrid.Location = new System.Drawing.Point(12, 44);
+            this.dataGrid.Location = new System.Drawing.Point(14, 44);
             this.dataGrid.Name = "dataGrid";
             this.dataGrid.RowHeadersWidth = 51;
-            this.dataGrid.Size = new System.Drawing.Size(1039, 551);
+            this.dataGrid.Size = new System.Drawing.Size(1037, 551);
             this.dataGrid.TabIndex = 1;
+            this.dataGrid.SelectionChanged += new System.EventHandler(this.DataGrid_SelectionChanged);
             // 
             // cmdGetSelected
             // 
@@ -85,9 +89,19 @@ namespace RazorEnhanced
             this.cmdGetSelected.UseVisualStyleBackColor = true;
             this.cmdGetSelected.Click += new System.EventHandler(this.CmdGetSelected_Click);
             // 
+            // pictureBoxSelectedObj
+            // 
+            this.pictureBoxSelectedObj.Location = new System.Drawing.Point(268, 6);
+            this.pictureBoxSelectedObj.Name = "pictureBoxSelectedObj";
+            this.pictureBoxSelectedObj.Size = new System.Drawing.Size(32, 32);
+            this.pictureBoxSelectedObj.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxSelectedObj.TabIndex = 3;
+            this.pictureBoxSelectedObj.TabStop = false;
+            // 
             // ContainerInspector
             // 
             this.ClientSize = new System.Drawing.Size(1063, 607);
+            this.Controls.Add(this.pictureBoxSelectedObj);
             this.Controls.Add(this.cmdGetSelected);
             this.Controls.Add(this.dataGrid);
             this.Controls.Add(this.cmdScanContainer);
@@ -95,6 +109,7 @@ namespace RazorEnhanced
             this.Text = "Container Inspector";
             this.Resize += new System.EventHandler(this.BulkItemsInspector_Resize);
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSelectedObj)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -179,10 +194,8 @@ namespace RazorEnhanced
                     if (row.Cells["Serial"].Value == null)
                         continue;
 
-                    var serial = row.Cells["Serial"].Value;
-                    var name = row.Cells["Name"].Value;
-
                     if (row.Cells["QualityColor"].Value.ToString() == "") continue;
+
                     row.Cells["Quality"].Style.ForeColor = System.Drawing.ColorTranslator.FromHtml(row.Cells["QualityColor"].Value.ToString());
                 }
 
@@ -265,6 +278,7 @@ namespace RazorEnhanced
                 public int MaxValue { get; set; } = 0;
                 public bool IsFlag { get; set; }
                 public bool IsPercent { get; set;}
+                public string RawDescription { get; set; }
             }
 
             public string Serial { get; set; }
@@ -309,7 +323,8 @@ namespace RazorEnhanced
                 {
                     PropertyName = Regex.Match(property, @"^[^\d:+-]+").Value.Trim(), // Set PropertyName
                     IsFlag = true, // Set IsBoolean by default true
-                    IsPercent = property.Contains("%")
+                    IsPercent = property.Contains("%"),
+                    RawDescription = property
                 };
 
                 // Set Value and MaxValue
@@ -331,6 +346,22 @@ namespace RazorEnhanced
             }
 
             return uoObject;
+        }
+        private void DataGrid_SelectionChanged(object sender, EventArgs e)
+        {
+            if (dataGrid.SelectedRows.Count > 0)
+            {
+                try
+                {
+                    Item selected = Items.FindBySerial(Convert.ToInt32(dataGrid.SelectedRows[0].Cells["Serial"].Value.ToString(), 16));
+                    pictureBoxSelectedObj.Image = Items.GetImage(selected.ItemID);
+                    pictureBoxSelectedObj.SizeMode = PictureBoxSizeMode.StretchImage;
+                }
+                catch
+                {
+
+                }
+            }
         }
     }
 }
