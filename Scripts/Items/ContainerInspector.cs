@@ -3,19 +3,16 @@
 // 
 // Copyright Caporale Simone - 2024
 
-//-#-f-o-r-cedebug 
-using Assistant;
+//#forcedebug 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+
 
 namespace RazorEnhanced
 {
@@ -33,6 +30,8 @@ namespace RazorEnhanced
         private CheckBox checkRecursiveScan;
         private StatusStrip statusStrip;
         private ToolStripStatusLabel toolStripStatus_Result;
+        private CheckedListBox checkedListBox_ColumnsFilter;
+        private Label lblColumnsFilter;
         #endregion
 
         #region Global Variables
@@ -62,6 +61,8 @@ namespace RazorEnhanced
             this.checkRecursiveScan = new System.Windows.Forms.CheckBox();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.toolStripStatus_Result = new System.Windows.Forms.ToolStripStatusLabel();
+            this.checkedListBox_ColumnsFilter = new System.Windows.Forms.CheckedListBox();
+            this.lblColumnsFilter = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSelectedObj)).BeginInit();
             this.statusStrip.SuspendLayout();
@@ -75,27 +76,38 @@ namespace RazorEnhanced
             this.cmdScanContainer.TabIndex = 0;
             this.cmdScanContainer.Text = "Scan Container";
             this.cmdScanContainer.UseVisualStyleBackColor = true;
+            this.cmdScanContainer.Click += new System.EventHandler(this.CmdScanContainer_Click);
             // 
             // dataGrid
             // 
+            this.dataGrid.AllowUserToAddRows = false;
+            this.dataGrid.AllowUserToDeleteRows = false;
+            this.dataGrid.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells;
             this.dataGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGrid.Location = new System.Drawing.Point(174, 44);
+            this.dataGrid.MultiSelect = false;
             this.dataGrid.Name = "dataGrid";
+            this.dataGrid.ReadOnly = true;
             this.dataGrid.RowHeadersWidth = 51;
+            this.dataGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGrid.Size = new System.Drawing.Size(877, 547);
             this.dataGrid.TabIndex = 1;
+            this.dataGrid.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.DataGrid_CellFormatting);
+            this.dataGrid.SelectionChanged += new System.EventHandler(this.DataGrid_SelectionChanged);
             // 
             // cmdGetSelected
             // 
             this.cmdGetSelected.Location = new System.Drawing.Point(153, 12);
             this.cmdGetSelected.Name = "cmdGetSelected";
-            this.cmdGetSelected.Size = new System.Drawing.Size(109, 26);
+            this.cmdGetSelected.Size = new System.Drawing.Size(120, 26);
             this.cmdGetSelected.TabIndex = 2;
-            this.cmdGetSelected.Text = "Get Selected";
+            this.cmdGetSelected.Text = "Grab Selected";
             this.cmdGetSelected.UseVisualStyleBackColor = true;
+            this.cmdGetSelected.Click += new System.EventHandler(this.CmdGetSelected_Click);
             // 
             // pictureBoxSelectedObj
             // 
+            this.pictureBoxSelectedObj.BackColor = System.Drawing.Color.Black;
             this.pictureBoxSelectedObj.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.pictureBoxSelectedObj.Location = new System.Drawing.Point(57, 55);
             this.pictureBoxSelectedObj.Name = "pictureBoxSelectedObj";
@@ -110,7 +122,7 @@ namespace RazorEnhanced
             this.selectedPropList.ItemHeight = 20;
             this.selectedPropList.Location = new System.Drawing.Point(13, 123);
             this.selectedPropList.Name = "selectedPropList";
-            this.selectedPropList.Size = new System.Drawing.Size(155, 444);
+            this.selectedPropList.Size = new System.Drawing.Size(155, 224);
             this.selectedPropList.TabIndex = 4;
             // 
             // checkRecursiveScan
@@ -118,7 +130,7 @@ namespace RazorEnhanced
             this.checkRecursiveScan.AutoSize = true;
             this.checkRecursiveScan.Checked = true;
             this.checkRecursiveScan.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkRecursiveScan.Location = new System.Drawing.Point(268, 14);
+            this.checkRecursiveScan.Location = new System.Drawing.Point(279, 13);
             this.checkRecursiveScan.Name = "checkRecursiveScan";
             this.checkRecursiveScan.Size = new System.Drawing.Size(146, 24);
             this.checkRecursiveScan.TabIndex = 5;
@@ -142,9 +154,30 @@ namespace RazorEnhanced
             this.toolStripStatus_Result.Size = new System.Drawing.Size(60, 25);
             this.toolStripStatus_Result.Text = "Ready";
             // 
+            // checkedListBox_ColumnsFilter
+            // 
+            this.checkedListBox_ColumnsFilter.FormattingEnabled = true;
+            this.checkedListBox_ColumnsFilter.Location = new System.Drawing.Point(12, 389);
+            this.checkedListBox_ColumnsFilter.Name = "checkedListBox_ColumnsFilter";
+            this.checkedListBox_ColumnsFilter.Size = new System.Drawing.Size(155, 188);
+            this.checkedListBox_ColumnsFilter.TabIndex = 7;
+            this.checkedListBox_ColumnsFilter.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.CheckedListBox_ColumnsFilter_ItemCheck);
+            // 
+            // lblColumnsFilter
+            // 
+            this.lblColumnsFilter.AutoSize = true;
+            this.lblColumnsFilter.Location = new System.Drawing.Point(12, 366);
+            this.lblColumnsFilter.Name = "lblColumnsFilter";
+            this.lblColumnsFilter.Size = new System.Drawing.Size(110, 20);
+            this.lblColumnsFilter.TabIndex = 8;
+            this.lblColumnsFilter.Text = "Columns Filter";
+            this.lblColumnsFilter.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // ContainerInspector
             // 
             this.ClientSize = new System.Drawing.Size(1072, 607);
+            this.Controls.Add(this.lblColumnsFilter);
+            this.Controls.Add(this.checkedListBox_ColumnsFilter);
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.checkRecursiveScan);
             this.Controls.Add(this.selectedPropList);
@@ -177,11 +210,6 @@ namespace RazorEnhanced
 
             // Initialize DataGrid
             ConfigureDataGrid();
-
-            // Events
-            this.cmdGetSelected.Click += new System.EventHandler(this.CmdGetSelected_Click);
-            this.cmdScanContainer.Click += new System.EventHandler(this.CmdScanContainer_Click);
-            this. dataGrid.SelectionChanged += new System.EventHandler(this.DataGrid_SelectionChanged);
         }
         private void ConfigureDataGrid()
         {
@@ -193,13 +221,11 @@ namespace RazorEnhanced
             PropertyInfo pi = dgvType.GetProperty("DoubleBuffered", BindingFlags.Instance | BindingFlags.NonPublic);
             pi.SetValue(dataGrid, true, null);
 
-            dataGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells; // Imposta la larghezza delle colonne in modo che contenga tutto il testo
             dataGrid.ColumnHeadersDefaultCellStyle.Font = defaultFontBold;
             dataGrid.Font = defaultFontRegular;
             dataGrid.BackgroundColor = System.Drawing.Color.DarkGray;
             dataGrid.DefaultCellStyle.ForeColor = System.Drawing.Color.White;
             dataGrid.DefaultCellStyle.BackColor = System.Drawing.Color.Black;
-            dataGrid.ReadOnly = true;
         }
         #endregion
 
@@ -208,11 +234,12 @@ namespace RazorEnhanced
         {
             var window_state = this.WindowState;
             this.WindowState = FormWindowState.Minimized;
-            
-            ResetLeftPanel();
+
+            ResetDetailsPanel();
             TargetContainerAndUpdateObjectsList(checkRecursiveScan.Checked);
             RefreshDataGrid();
             UpdateStatusBar();
+            UpdateComboBoxFilters();
 
             this.WindowState = window_state;
         }
@@ -236,7 +263,6 @@ namespace RazorEnhanced
                 {
                     Item selected = Items.FindBySerial(Convert.ToInt32(dataGrid.SelectedRows[0].Cells["Serial"].Value.ToString(), 16));
                     pictureBoxSelectedObj.Image = Items.GetImage(selected.ItemID);
-                    //pictureBoxSelectedObj.SizeMode = PictureBoxSizeMode.StretchImage;
 
                     selectedPropList.Items.Clear();
                     foreach (var prop in selected.Properties)
@@ -257,10 +283,46 @@ namespace RazorEnhanced
                 }
             }
         }
+        private void DataGrid_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (this.dataGrid.Columns[e.ColumnIndex].Name == "Name")
+            {
+                if (e.Value != null)
+                {
+                    e.CellStyle.Font = defaultFontBold;
+                }
+            }
+
+            if (this.dataGrid.Columns[e.ColumnIndex].Name == "Quality")
+            {
+                if (e.Value != null)
+                {
+                    string qualityColor = dataGrid.Rows[e.RowIndex].Cells["QualityColor"].Value.ToString();
+                    e.CellStyle.ForeColor = System.Drawing.ColorTranslator.FromHtml(qualityColor);
+                    e.CellStyle.Font = defaultFontBold;
+                }
+            }
+        }
         private void BulkItemsInspector_Resize(object sender, EventArgs e)
         {
             Control control = (Control)sender;
             dataGrid.Size = new System.Drawing.Size(control.Size.Width - 200, control.Size.Height - 100);
+        }
+        private void CheckedListBox_ColumnsFilter_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            string changedItem = checkedListBox_ColumnsFilter.Items[e.Index].ToString();
+            bool isSelected = e.NewValue == CheckState.Checked;
+
+            if (changedItem == "ALL")
+            {
+                for (int i = 1; i < checkedListBox_ColumnsFilter.Items.Count; i++)
+                {
+                    checkedListBox_ColumnsFilter.SetItemChecked(i, isSelected);
+                }
+                return;
+            }
+
+            dataGrid.Columns[changedItem].Visible = isSelected;
         }
         #endregion
 
@@ -317,6 +379,11 @@ namespace RazorEnhanced
                         IsPercent = property.Contains("%"),
                         RawDescription = property
                     };
+
+                    // Ignore error o unexpected properties. Eg: Chivalry book that shows "10 Spells"
+                    // in this case I'm expecting a string before a number and the regex fails with an empty string
+                    // I don't care must about this kind of properties
+                    if (objectProperty.PropertyName == "") continue; 
 
                     // Set Value and MaxValue
                     MatchCollection matches = Regex.Matches(property, @"[-+]?\d+");
@@ -447,26 +514,13 @@ namespace RazorEnhanced
 
             dataGrid.Visible = false;
             dataGrid.DataSource = table;
-            dataGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dataGrid.ReadOnly = true;
-
-            Player.HeadMessage(33, "Last Fixes...");
             dataGrid.Columns["QualityColor"].Visible = false;
-
-            foreach (DataGridViewRow row in dataGrid.Rows)
-            {
-                if (row.Cells["QualityColor"].Value == null) continue;
-                //if (row.Cells["QualityColor"].Value.ToString() == "") continue;
-                row.Cells["Quality"].Style.ForeColor = System.Drawing.ColorTranslator.FromHtml(row.Cells["QualityColor"].Value.ToString());
-            }
-
-            dataGrid.Columns["Quality"].DefaultCellStyle.Font = defaultFontBold;
             dataGrid.Visible = true;
 
             if (dataGrid.Rows.Count > 0)
                 dataGrid.Rows[0].Selected = true;
         }
-        private void ResetLeftPanel()
+        private void ResetDetailsPanel()
         {
             pictureBoxSelectedObj.Image = null;
             selectedPropList.Items.Clear();
@@ -476,7 +530,25 @@ namespace RazorEnhanced
             int number_of_fixed_columsn = 4; // Serial, Name, Layer, QualityColor (hidden)
             toolStripStatus_Result.Text = "Items found: " + scannedItemsList.Count + " - Proerties: " + (dataGrid.ColumnCount - number_of_fixed_columsn).ToString();
         }
+        private void UpdateComboBoxFilters()
+        {
+            checkedListBox_ColumnsFilter.Items.Clear();
+            
+            checkedListBox_ColumnsFilter.Items.Add("ALL", true);
 
+            // Get the list of column names from the dataGrid
+            List<string> columnNames = dataGrid.Columns.Cast<DataGridViewColumn>()
+                .Select(column => column.Name)
+                .OrderBy(name => name)
+                .ToList();
+
+            foreach (var column in columnNames)
+            {
+                List<string> columnsToIgnore = new() { "Serial", "Name", "Layer", "Quality", "QualityColor" };
+                if (columnsToIgnore.Contains(column)) continue;
+                checkedListBox_ColumnsFilter.Items.Add(column, true);
+            }
+        }
         #endregion
     }
 }
