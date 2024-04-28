@@ -2,6 +2,7 @@
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
+	<LangVersion>9.0</LangVersion>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{76F7E590-D987-407A-9332-9AE9A0F2AD37}</ProjectGuid>
@@ -55,6 +56,9 @@
     <Compile Include="Experimental\PathFinding\PathFindingServer.cs" />
     <Compile Include="Scripts\BODS\Bod_Item.cs" />
     <Compile Include="Scripts\Gathering\TreeChopper.cs" />
+    <Compile Include="Scripts\Items\ContainerInspector.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Scripts\Items\MiningCarts_Stumps.cs" />
     <Compile Include="Scripts\Gathering\PlantsPicker.cs" />
     <Compile Include="Scripts\Libs\loot_container.cs" />
@@ -129,6 +133,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Scripts\BODS\SSBodsFiller.resx">
       <DependentUpon>SSBodsFiller.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Scripts\Items\ContainerInspector.resx">
+      <DependentUpon>ContainerInspector.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Scripts\Items\BulkItemsInspector.resx">
       <DependentUpon>BulkItemsInspector.cs</DependentUpon>
