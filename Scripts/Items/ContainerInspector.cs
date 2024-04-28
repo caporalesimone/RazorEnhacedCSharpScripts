@@ -1,0 +1,333 @@
+//C#
+
+//
+// Bulk Item Inspector
+//  This scripts inspects a container and show items properties in a table
+// 
+// Developed by SimonSoft on Demise Server - 2021
+//
+//
+
+//#forcedebug 
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace RazorEnhanced
+{
+    class ContainerInspector : Form
+    {
+        private Button cmdScanContainer;
+        private DataGridView dataGrid;
+        private Button cmdGetSelected;
+        private readonly List<object> lstData = new List<object>();
+        private Item container;
+
+        public ContainerInspector()
+        {
+            InitializeComponent();
+            this.Text = this.Text + " - " + Player.Name;
+        }
+
+        public void Run()
+        {
+            ConfigureTable();
+
+            Application.EnableVisualStyles();
+            Application.Run(this); // This is blocking. Will return only when form is closed
+        }
+
+        private void InitializeComponent()
+        {
+            this.cmdScanContainer = new System.Windows.Forms.Button();
+            this.dataGrid = new System.Windows.Forms.DataGridView();
+            this.cmdGetSelected = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
+            this.SuspendLayout();
+            // 
+            // cmdScanContainer
+            // 
+            this.cmdScanContainer.Location = new System.Drawing.Point(14, 12);
+            this.cmdScanContainer.Name = "cmdScanContainer";
+            this.cmdScanContainer.Size = new System.Drawing.Size(133, 26);
+            this.cmdScanContainer.TabIndex = 0;
+            this.cmdScanContainer.Text = "Scan Container";
+            this.cmdScanContainer.UseVisualStyleBackColor = true;
+            this.cmdScanContainer.Click += new System.EventHandler(this.CmdScanContainer_Click);
+            // 
+            // dataGrid
+            // 
+            this.dataGrid.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGrid.Location = new System.Drawing.Point(12, 44);
+            this.dataGrid.Name = "dataGrid";
+            this.dataGrid.RowHeadersWidth = 51;
+            this.dataGrid.Size = new System.Drawing.Size(1039, 551);
+            this.dataGrid.TabIndex = 1;
+            // 
+            // cmdGetSelected
+            // 
+            this.cmdGetSelected.Location = new System.Drawing.Point(153, 12);
+            this.cmdGetSelected.Name = "cmdGetSelected";
+            this.cmdGetSelected.Size = new System.Drawing.Size(109, 26);
+            this.cmdGetSelected.TabIndex = 2;
+            this.cmdGetSelected.Text = "Get Selected";
+            this.cmdGetSelected.UseVisualStyleBackColor = true;
+            this.cmdGetSelected.Click += new System.EventHandler(this.CmdGetSelected_Click);
+            // 
+            // ContainerInspector
+            // 
+            this.ClientSize = new System.Drawing.Size(1063, 607);
+            this.Controls.Add(this.cmdGetSelected);
+            this.Controls.Add(this.dataGrid);
+            this.Controls.Add(this.cmdScanContainer);
+            this.Name = "ContainerInspector";
+            this.Text = "Container Inspector";
+            this.Resize += new System.EventHandler(this.BulkItemsInspector_Resize);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).EndInit();
+            this.ResumeLayout(false);
+
+        }
+
+        private void CmdScanContainer_Click(object sender, EventArgs e)
+        {
+            lstData.Clear();
+            container = Items.FindBySerial(new Target().PromptTarget("Select a container"));
+            if (container != null && (container.IsContainer || container.IsCorpse))
+            {
+                Items.UseItem(container);
+                Misc.Pause(800);
+                var found = FindItems(container, true);
+                if (found != null && found.Count > 0)
+                {
+                    foreach (var itm in found)
+                    {
+                        if (itm.IsContainer) { continue; } // Skip containers
+                        if (itm.ItemID == 0x2259) { continue; } // Skip book of bods
+
+                        var item = ParseProperties(itm.Properties.Select(p =>
+                        {
+                            string propName = p.ToString().ToLower();
+                            var skip = new[] { "crafted by", "recovered from" };
+                            if (skip.Any(propName.Contains)) return null; // Skiping unuseful properties
+                            return propName;
+                        }).Where(p => p != null).ToList());
+
+                        item.Serial = "0x" + itm.Serial.ToString("X");
+                        lstData.Add(item);
+                    }
+                }
+
+                if (lstData.Count == 0)
+                {
+                    Misc.SendMessage("Nothing found", 33);
+                    return;
+                }
+
+                DataTable table = new DataTable();
+                
+                table.Columns.Add("Serial", typeof(string));
+                table.Columns.Add("Name", typeof(string));
+                table.Columns.Add("Quality", typeof(string));
+                table.Columns.Add("QualityColor", typeof(string));
+
+                foreach (UOObject item in lstData.Cast<UOObject>())
+                {
+                    DataRow row = table.NewRow();
+                    row["Serial"] = item.Serial;
+                    row["Name"] = item.Name;
+                    row["Quality"] = item.Quality;
+                    row["QualityColor"] = item.QualityColor;
+
+                    foreach (var prop in item.Properties)
+                    {
+                        if (!table.Columns.Contains(prop.PropertyName))
+                        {
+                            table.Columns.Add(prop.PropertyName, prop.Value == null ? typeof(bool) : prop.Value.GetType());
+                        }
+                        row[prop.PropertyName] = (prop.Value == null) ? true : prop.Value;
+                    }
+
+                    table.Rows.Add(row);
+                }
+
+
+                dataGrid.DataSource = table;
+                dataGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                dataGrid.ReadOnly = true;
+
+
+                dataGrid.Columns["QualityColor"].Visible = false;
+                foreach (DataGridViewRow row in dataGrid.Rows)
+                {
+                    if (row.Cells["Serial"].Value == null)
+                        continue;
+
+                    var serial = row.Cells["Serial"].Value;
+                    var name = row.Cells["Name"].Value;
+
+                    if (row.Cells["QualityColor"].Value.ToString() == "") continue;
+                    row.Cells["Quality"].Style.ForeColor = System.Drawing.ColorTranslator.FromHtml(row.Cells["QualityColor"].Value.ToString());
+                    var font = row.Cells["Quality"].Style.Font;
+                    var v = 0;
+                    //row.Cells["Quality"].Style.Font = new System.Drawing.Font(font, System.Drawing.FontStyle.Bold);
+                }
+
+                /*
+                foreach (DataGridViewColumn col in dataGrid.Columns)
+                {
+                    foreach (var key in replace_str)
+                    {
+                        if (key.Value.Item1 == col.Name)
+                        {
+                            col.ToolTipText = Regex.Replace(key.Key, @"(^\w)|(\s\w)", m => m.Value.ToUpper(), RegexOptions.Compiled);
+                            col.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                            continue;
+                        }
+                    }
+                }
+                */
+
+            }
+
+        }
+
+        private List<Item> FindItems(Item container, bool recursive = true)
+        {
+            List<Item> itemList = new List<Item>();
+
+            foreach (Item item in container.Contains)
+            {
+                //if (itemIDs.Contains(item.ItemID))
+                {
+                    itemList.Add(item);
+                }
+            }
+
+            if (recursive)
+            {
+                List<Item> subcontainers = container.Contains.Select(sublist => sublist).Where(item => item.IsContainer).ToList();
+
+                foreach (Item bag in subcontainers)
+                {
+                    if (bag.ItemID == 0x2259) { continue; } // If is a Book of BOD skip
+                    Items.UseItem(bag);
+                    Misc.Pause(800);
+                    List<Item> itemInSubContainer = FindItems(bag, true);
+                    itemList.AddRange(itemInSubContainer);
+                }
+            }
+
+            return itemList;
+        }
+
+        private void ConfigureTable()
+        {
+            // Imposta colonne della griglia.
+            dataGrid.Columns.Clear();
+
+            // This will speedup grid rendering
+            Type dgvType = dataGrid.GetType();
+            PropertyInfo pi = dgvType.GetProperty("DoubleBuffered", BindingFlags.Instance | BindingFlags.NonPublic);
+            pi.SetValue(dataGrid, true, null);
+
+            dataGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells; // Imposta la larghezza delle colonne in modo che contenga tutto il testo
+            dataGrid.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGrid.ReadOnly = true;
+        }
+
+        private void BulkItemsInspector_Resize(object sender, EventArgs e)
+        {
+            Control control = (Control)sender;
+            dataGrid.Size = new System.Drawing.Size(control.Size.Width - 50, control.Size.Height - 100);
+        }
+
+        private void CmdGetSelected_Click(object sender, EventArgs e)
+        {
+            if (container == null) return;
+            if (dataGrid.SelectedRows.Count == 0) return;
+
+            var row = dataGrid.SelectedRows;
+            string serial = row[0].Cells["Serial"].Value.ToString();
+            Items.Move(Convert.ToInt32(serial, 16), Player.Backpack.Serial, 1);
+        }
+
+
+        private class UOObject
+        {
+            public class ObjectProperty
+            {
+                public string PropertyName { get; set; }
+                public string Value { get; set; } = null;
+                public string MaxValue { get; set; } = null;
+            }
+
+            public string Serial { get; set; }
+            public string Name { get; set; }
+            public string Quality { get; set; }
+            public string QualityColor { get; set; }
+            public List<ObjectProperty> Properties { get; set; } = new List<ObjectProperty>();
+        }
+
+        private static UOObject ParseProperties(List<string> properties)
+        {
+            UOObject uoObject = new UOObject();
+
+            // Set Name
+            uoObject.Name = properties[0];
+
+            // Set Quality and QualityColor
+            string lastProperty = properties[properties.Count - 1];
+            if (lastProperty.Contains("<basefont"))
+            {
+                int start = lastProperty.IndexOf(">") + 1;
+                int end = lastProperty.Length;
+                uoObject.Quality = lastProperty.Substring(start, end - start).Trim();
+
+                int colorStart = lastProperty.IndexOf("color=") + 6;
+                int colorEnd = lastProperty.IndexOf(">");
+                uoObject.QualityColor = lastProperty.Substring(colorStart, colorEnd - colorStart);
+            }
+            else
+            {
+                uoObject.Quality = null;
+                uoObject.QualityColor = null;
+            }
+
+            int numProperties = lastProperty.Contains("<basefont") ? properties.Count - 1 : properties.Count;
+
+            // Set Properties
+            for (int i = 1; i < numProperties; i++)
+            {
+                string property = properties[i];
+                UOObject.ObjectProperty objectProperty = new UOObject.ObjectProperty();
+
+                // Set PropertyName
+                objectProperty.PropertyName = Regex.Match(property, @"^[^\d:+-]+").Value.Trim();
+
+                // Set Value and MaxValue
+                MatchCollection matches = Regex.Matches(property, @"[-+]?\d+");
+                if (matches.Count == 1)
+                {
+                    objectProperty.Value = property.EndsWith("%") ? matches[0].Value + "%" : matches[0].Value;
+                }
+                else if (matches.Count == 2)
+                {
+                    objectProperty.Value = matches[0].Value;
+                    objectProperty.MaxValue = matches[1].Value;
+                }
+
+                uoObject.Properties.Add(objectProperty);
+            }
+
+            return uoObject;
+        }
+    }
+}
