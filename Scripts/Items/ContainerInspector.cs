@@ -18,14 +18,14 @@ namespace RazorEnhanced
     class ContainerInspector : Form
     {
         #region User Interface
+        private readonly System.Drawing.Font defaultFontRegular = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+        private readonly System.Drawing.Font defaultFontBold = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+
         private Button cmdScanContainer;
         private DataGridView dataGrid;
         private Button cmdGetSelected;
         private PictureBox pictureBoxSelectedObj;
         private ListBox selectedPropList;
-
-        private readonly System.Drawing.Font defaultFontRegular = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-        private readonly System.Drawing.Font defaultFontBold = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
         private CheckBox checkRecursiveScan;
         private StatusStrip statusStrip;
         private ToolStripStatusLabel toolStripStatus_Result;
@@ -37,8 +37,10 @@ namespace RazorEnhanced
         #endregion
 
         #region Global Variables
-        private readonly List<UOObject> scannedItemsList = new();
+        private List<UOObject> scannedItemsList = new();
+        private List<UOObject> scannedItemsList_CopyForFiltering = new();
         private int specialColumnsCount;
+        private DataTable originalTableWithoutFilters;
         #endregion
 
         #region Constructor, Run and Initializations
@@ -167,7 +169,6 @@ namespace RazorEnhanced
             this.checkedListBox_ColumnsFilter.Name = "checkedListBox_ColumnsFilter";
             this.checkedListBox_ColumnsFilter.Size = new System.Drawing.Size(155, 234);
             this.checkedListBox_ColumnsFilter.TabIndex = 7;
-            this.checkedListBox_ColumnsFilter.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.CheckedListBox_ColumnsFilter_ItemCheck);
             // 
             // lblColumnsFilter
             // 
@@ -192,10 +193,12 @@ namespace RazorEnhanced
             // radioButton_OR
             // 
             this.radioButton_OR.AutoSize = true;
+            this.radioButton_OR.Checked = true;
             this.radioButton_OR.Location = new System.Drawing.Point(14, 655);
             this.radioButton_OR.Name = "radioButton_OR";
             this.radioButton_OR.Size = new System.Drawing.Size(58, 24);
             this.radioButton_OR.TabIndex = 10;
+            this.radioButton_OR.TabStop = true;
             this.radioButton_OR.Text = "OR";
             this.radioButton_OR.UseVisualStyleBackColor = true;
             this.radioButton_OR.CheckedChanged += new System.EventHandler(this.RadioButton_OR_CheckedChanged);
@@ -203,12 +206,10 @@ namespace RazorEnhanced
             // radioButton_AND
             // 
             this.radioButton_AND.AutoSize = true;
-            this.radioButton_AND.Checked = true;
             this.radioButton_AND.Location = new System.Drawing.Point(100, 655);
             this.radioButton_AND.Name = "radioButton_AND";
             this.radioButton_AND.Size = new System.Drawing.Size(68, 24);
             this.radioButton_AND.TabIndex = 11;
-            this.radioButton_AND.TabStop = true;
             this.radioButton_AND.Text = "AND";
             this.radioButton_AND.UseVisualStyleBackColor = true;
             this.radioButton_AND.CheckedChanged += new System.EventHandler(this.RadioButton_AND_CheckedChanged);
@@ -284,6 +285,9 @@ namespace RazorEnhanced
             UpdateStatusBar();
             UpdateComboBoxFilters();
 
+            originalTableWithoutFilters = new DataTable();
+            originalTableWithoutFilters = (dataGrid.DataSource as DataTable).Copy();
+
             this.WindowState = window_state;
         }
         private void CmdGetSelected_Click(object sender, EventArgs e)
@@ -294,6 +298,67 @@ namespace RazorEnhanced
             string serial = row[0].Cells["Serial"].Value.ToString();
             Items.Move(Convert.ToInt32(serial, 16), Player.Backpack.Serial, 1);
             dataGrid.Rows.Remove(row[0]);
+        }
+        private void CmdFilter_Click(object sender, EventArgs e)
+        {
+            List<string> selectedProperties = new();
+
+            for (int i = 0; i < checkedListBox_ColumnsFilter.Items.Count; i++)
+            {
+                if (checkedListBox_ColumnsFilter.GetItemChecked(i))
+                {
+                    selectedProperties.Add(checkedListBox_ColumnsFilter.Items[i].ToString());
+                }
+            }
+
+            List<DataRow> rowsToHide = new();
+
+            if (selectedProperties.Count > 0)
+            {
+                DataTable table = originalTableWithoutFilters.Copy();
+
+                if (radioButton_AND.Checked)
+                {
+                    foreach (DataRow row in table.Rows)
+                    {
+                        foreach (string property in selectedProperties)
+                        {
+                            if (row[property].ToString() == "")
+                            {
+                                rowsToHide.Add(row);
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (DataRow row in table.Rows)
+                    {
+                        bool bValid = false;
+                        foreach (string property in selectedProperties)
+                        {
+                            string value = row[property].ToString();
+                            if (value != "")
+                            {
+                                bValid = true;
+                                break;
+                            }
+                        }
+                        if (!bValid) rowsToHide.Add(row);
+                    }
+                }
+            }
+
+            scannedItemsList = new(scannedItemsList_CopyForFiltering);
+
+            foreach (var row in rowsToHide)
+            {
+                string serial = row["Serial"].ToString();
+                scannedItemsList.RemoveAll(item => item.Serial == serial);
+            }
+
+            RefreshDataGrid();
         }
         #endregion
 
@@ -350,20 +415,6 @@ namespace RazorEnhanced
         {
             Control control = (Control)sender;
             dataGrid.Size = new System.Drawing.Size(control.Size.Width - 200, control.Size.Height - 100);
-        }
-        private void CheckedListBox_ColumnsFilter_ItemCheck(object sender, ItemCheckEventArgs e)
-        {
-            string changedItem = checkedListBox_ColumnsFilter.Items[e.Index].ToString();
-            bool isSelected = e.NewValue == CheckState.Checked;
-
-            if (changedItem == "ALL")
-            {
-                for (int i = 1; i < checkedListBox_ColumnsFilter.Items.Count; i++)
-                {
-                    checkedListBox_ColumnsFilter.SetItemChecked(i, isSelected);
-                }
-                return;
-            }
         }
         private void RadioButton_AND_CheckedChanged(object sender, EventArgs e)
         {
@@ -516,6 +567,9 @@ namespace RazorEnhanced
                 }
             }
 
+            // Create a copy of the list to be used for filtering
+            scannedItemsList_CopyForFiltering = new List<UOObject>(scannedItemsList);
+
             if (scannedItemsList.Count == 0)
             {
                 Misc.SendMessage("Nothing found", 33);
@@ -538,7 +592,7 @@ namespace RazorEnhanced
             table.Columns.Add("QualityColor", typeof(string));
             specialColumnsCount = 4; // Quality is not considered a special column
 
-            foreach (UOObject item in scannedItemsList.Cast<UOObject>())
+            foreach (UOObject item in scannedItemsList)
             {
                 DataRow row = table.NewRow();
                 row["Serial"] = item.Serial;
@@ -581,8 +635,6 @@ namespace RazorEnhanced
         {
             checkedListBox_ColumnsFilter.Items.Clear();
 
-            checkedListBox_ColumnsFilter.Items.Add("ALL", true);
-
             // Get the list of column names from the dataGrid
             List<string> columnNames = dataGrid.Columns.Cast<DataGridViewColumn>()
                 .Select(column => column.Name)
@@ -593,121 +645,10 @@ namespace RazorEnhanced
             {
                 List<string> columnsToIgnore = new() { "Serial", "Name", "Layer", "Quality", "QualityColor" };
                 if (columnsToIgnore.Contains(column)) continue;
-                checkedListBox_ColumnsFilter.Items.Add(column, true);
+                checkedListBox_ColumnsFilter.Items.Add(column, false);
             }
         }
 
         #endregion
-        private void CmdFilter_Click(object sender, EventArgs e)
-        {
-            List<string> selectedProperties = new();
-
-            for (int i = 1; i < checkedListBox_ColumnsFilter.Items.Count; i++)
-            {
-                if (checkedListBox_ColumnsFilter.GetItemChecked(i))
-                {
-                    selectedProperties.Add(checkedListBox_ColumnsFilter.Items[i].ToString());
-                }
-            }
-
-            DataTable table = dataGrid.DataSource as DataTable;
-            List<DataRow> rowsToHide = new();
-
-            if (radioButton_AND.Checked)
-            {
-                foreach (DataRow row in table.Rows)
-                {
-                    foreach (string property in selectedProperties)
-                    {
-                        if (row[property].ToString() == "")
-                        {
-                            rowsToHide.Add(row);
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                foreach (DataRow row in table.Rows)
-                {
-                    foreach (string property in selectedProperties)
-                    {
-                        if (row[property].ToString() != "")
-                        {
-                            break;
-                        }
-                        rowsToHide.Add(row);
-                        break;
-                    }
-                }
-            }
-
-            foreach (var row in rowsToHide)
-            {
-                table.Rows.Remove(row);
-            }
-
-            dataGrid.Visible = false;
-            dataGrid.DataSource = table;
-            dataGrid.Visible = true;
-            dataGrid.Refresh();
-        }
-
-        /*private void CmdFilter_Click(object sender, EventArgs e)
-        {
-            //RefreshDataGrid();
-
-            List<string> selectedProperties = new();
-
-            for (int i = 1; i < checkedListBox_ColumnsFilter.Items.Count; i++)
-            {
-                if (checkedListBox_ColumnsFilter.GetItemChecked(i))
-                {
-                    selectedProperties.Add(checkedListBox_ColumnsFilter.Items[i].ToString());
-                }
-            }
-
-            List<DataGridViewRow> rowsToHide = new();
-
-
-            if (radioButton_AND.Checked)
-            {
-                foreach (DataGridViewRow row in dataGrid.Rows)
-                {
-                    foreach (string property in selectedProperties)
-                    {
-                        if (row.Cells[property].Value.ToString() == "")
-                        {
-                            rowsToHide.Add(row);
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                foreach (DataGridViewRow row in dataGrid.Rows)
-                {
-                    foreach (string property in selectedProperties)
-                    {
-                        if (row.Cells[property].Value.ToString() != "")
-                        {
-                            break;
-                        }
-                        rowsToHide.Add(row);
-                        break;
-                    }
-                }
-            }
-
-
-            foreach (var row in rowsToHide)
-            {
-                dataGrid.Rows.Remove(row);
-            }
-        }
-        */
-
     }
 }
