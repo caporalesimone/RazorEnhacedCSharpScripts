@@ -7,7 +7,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -32,10 +31,14 @@ namespace RazorEnhanced
         private ToolStripStatusLabel toolStripStatus_Result;
         private CheckedListBox checkedListBox_ColumnsFilter;
         private Label lblColumnsFilter;
+        private Button cmdFilter;
+        private RadioButton radioButton_OR;
+        private RadioButton radioButton_AND;
         #endregion
 
         #region Global Variables
         private readonly List<UOObject> scannedItemsList = new();
+        private int specialColumnsCount;
         #endregion
 
         #region Constructor, Run and Initializations
@@ -63,6 +66,9 @@ namespace RazorEnhanced
             this.toolStripStatus_Result = new System.Windows.Forms.ToolStripStatusLabel();
             this.checkedListBox_ColumnsFilter = new System.Windows.Forms.CheckedListBox();
             this.lblColumnsFilter = new System.Windows.Forms.Label();
+            this.cmdFilter = new System.Windows.Forms.Button();
+            this.radioButton_OR = new System.Windows.Forms.RadioButton();
+            this.radioButton_AND = new System.Windows.Forms.RadioButton();
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSelectedObj)).BeginInit();
             this.statusStrip.SuspendLayout();
@@ -70,7 +76,7 @@ namespace RazorEnhanced
             // 
             // cmdScanContainer
             // 
-            this.cmdScanContainer.Location = new System.Drawing.Point(14, 12);
+            this.cmdScanContainer.Location = new System.Drawing.Point(12, 12);
             this.cmdScanContainer.Name = "cmdScanContainer";
             this.cmdScanContainer.Size = new System.Drawing.Size(133, 26);
             this.cmdScanContainer.TabIndex = 0;
@@ -90,7 +96,7 @@ namespace RazorEnhanced
             this.dataGrid.ReadOnly = true;
             this.dataGrid.RowHeadersWidth = 51;
             this.dataGrid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGrid.Size = new System.Drawing.Size(877, 547);
+            this.dataGrid.Size = new System.Drawing.Size(1072, 665);
             this.dataGrid.TabIndex = 1;
             this.dataGrid.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.DataGrid_CellFormatting);
             this.dataGrid.SelectionChanged += new System.EventHandler(this.DataGrid_SelectionChanged);
@@ -109,10 +115,10 @@ namespace RazorEnhanced
             // 
             this.pictureBoxSelectedObj.BackColor = System.Drawing.Color.Black;
             this.pictureBoxSelectedObj.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.pictureBoxSelectedObj.Location = new System.Drawing.Point(57, 55);
+            this.pictureBoxSelectedObj.Location = new System.Drawing.Point(49, 44);
             this.pictureBoxSelectedObj.Name = "pictureBoxSelectedObj";
-            this.pictureBoxSelectedObj.Size = new System.Drawing.Size(50, 50);
-            this.pictureBoxSelectedObj.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.pictureBoxSelectedObj.Size = new System.Drawing.Size(73, 73);
+            this.pictureBoxSelectedObj.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBoxSelectedObj.TabIndex = 3;
             this.pictureBoxSelectedObj.TabStop = false;
             // 
@@ -120,9 +126,9 @@ namespace RazorEnhanced
             // 
             this.selectedPropList.FormattingEnabled = true;
             this.selectedPropList.ItemHeight = 20;
-            this.selectedPropList.Location = new System.Drawing.Point(13, 123);
+            this.selectedPropList.Location = new System.Drawing.Point(12, 123);
             this.selectedPropList.Name = "selectedPropList";
-            this.selectedPropList.Size = new System.Drawing.Size(155, 224);
+            this.selectedPropList.Size = new System.Drawing.Size(155, 264);
             this.selectedPropList.TabIndex = 4;
             // 
             // checkRecursiveScan
@@ -142,9 +148,9 @@ namespace RazorEnhanced
             this.statusStrip.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatus_Result});
-            this.statusStrip.Location = new System.Drawing.Point(0, 575);
+            this.statusStrip.Location = new System.Drawing.Point(0, 712);
             this.statusStrip.Name = "statusStrip";
-            this.statusStrip.Size = new System.Drawing.Size(1072, 32);
+            this.statusStrip.Size = new System.Drawing.Size(1258, 32);
             this.statusStrip.TabIndex = 6;
             this.statusStrip.Text = "statusStrip1";
             // 
@@ -157,25 +163,62 @@ namespace RazorEnhanced
             // checkedListBox_ColumnsFilter
             // 
             this.checkedListBox_ColumnsFilter.FormattingEnabled = true;
-            this.checkedListBox_ColumnsFilter.Location = new System.Drawing.Point(12, 389);
+            this.checkedListBox_ColumnsFilter.Location = new System.Drawing.Point(12, 416);
             this.checkedListBox_ColumnsFilter.Name = "checkedListBox_ColumnsFilter";
-            this.checkedListBox_ColumnsFilter.Size = new System.Drawing.Size(155, 188);
+            this.checkedListBox_ColumnsFilter.Size = new System.Drawing.Size(155, 234);
             this.checkedListBox_ColumnsFilter.TabIndex = 7;
             this.checkedListBox_ColumnsFilter.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.CheckedListBox_ColumnsFilter_ItemCheck);
             // 
             // lblColumnsFilter
             // 
             this.lblColumnsFilter.AutoSize = true;
-            this.lblColumnsFilter.Location = new System.Drawing.Point(12, 366);
+            this.lblColumnsFilter.Location = new System.Drawing.Point(8, 393);
             this.lblColumnsFilter.Name = "lblColumnsFilter";
             this.lblColumnsFilter.Size = new System.Drawing.Size(110, 20);
             this.lblColumnsFilter.TabIndex = 8;
             this.lblColumnsFilter.Text = "Columns Filter";
             this.lblColumnsFilter.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // cmdFilter
+            // 
+            this.cmdFilter.Location = new System.Drawing.Point(14, 676);
+            this.cmdFilter.Name = "cmdFilter";
+            this.cmdFilter.Size = new System.Drawing.Size(151, 33);
+            this.cmdFilter.TabIndex = 9;
+            this.cmdFilter.Text = "Apply Filter";
+            this.cmdFilter.UseVisualStyleBackColor = true;
+            this.cmdFilter.Click += new System.EventHandler(this.CmdFilter_Click);
+            // 
+            // radioButton_OR
+            // 
+            this.radioButton_OR.AutoSize = true;
+            this.radioButton_OR.Location = new System.Drawing.Point(14, 655);
+            this.radioButton_OR.Name = "radioButton_OR";
+            this.radioButton_OR.Size = new System.Drawing.Size(58, 24);
+            this.radioButton_OR.TabIndex = 10;
+            this.radioButton_OR.Text = "OR";
+            this.radioButton_OR.UseVisualStyleBackColor = true;
+            this.radioButton_OR.CheckedChanged += new System.EventHandler(this.RadioButton_OR_CheckedChanged);
+            // 
+            // radioButton_AND
+            // 
+            this.radioButton_AND.AutoSize = true;
+            this.radioButton_AND.Checked = true;
+            this.radioButton_AND.Location = new System.Drawing.Point(100, 655);
+            this.radioButton_AND.Name = "radioButton_AND";
+            this.radioButton_AND.Size = new System.Drawing.Size(68, 24);
+            this.radioButton_AND.TabIndex = 11;
+            this.radioButton_AND.TabStop = true;
+            this.radioButton_AND.Text = "AND";
+            this.radioButton_AND.UseVisualStyleBackColor = true;
+            this.radioButton_AND.CheckedChanged += new System.EventHandler(this.RadioButton_AND_CheckedChanged);
+            // 
             // ContainerInspector
             // 
-            this.ClientSize = new System.Drawing.Size(1072, 607);
+            this.ClientSize = new System.Drawing.Size(1258, 744);
+            this.Controls.Add(this.radioButton_AND);
+            this.Controls.Add(this.radioButton_OR);
+            this.Controls.Add(this.cmdFilter);
             this.Controls.Add(this.lblColumnsFilter);
             this.Controls.Add(this.checkedListBox_ColumnsFilter);
             this.Controls.Add(this.statusStrip);
@@ -262,7 +305,7 @@ namespace RazorEnhanced
                 try
                 {
                     Item selected = Items.FindBySerial(Convert.ToInt32(dataGrid.SelectedRows[0].Cells["Serial"].Value.ToString(), 16));
-                    pictureBoxSelectedObj.Image = Items.GetImage(selected.ItemID);
+                    pictureBoxSelectedObj.Image = Items.GetImage(selected.ItemID, selected.Hue);
 
                     selectedPropList.Items.Clear();
                     foreach (var prop in selected.Properties)
@@ -321,8 +364,14 @@ namespace RazorEnhanced
                 }
                 return;
             }
-
-            dataGrid.Columns[changedItem].Visible = isSelected;
+        }
+        private void RadioButton_AND_CheckedChanged(object sender, EventArgs e)
+        {
+            radioButton_OR.Checked = !radioButton_AND.Checked;
+        }
+        private void RadioButton_OR_CheckedChanged(object sender, EventArgs e)
+        {
+            radioButton_AND.Checked = !radioButton_OR.Checked;
         }
         #endregion
 
@@ -335,7 +384,7 @@ namespace RazorEnhanced
                 public int Value { get; set; } = 0;
                 public int MaxValue { get; set; } = 0;
                 public bool IsFlag { get; set; }
-                public bool IsPercent { get; set;}
+                public bool IsPercent { get; set; }
                 public string RawDescription { get; set; }
             }
 
@@ -345,10 +394,15 @@ namespace RazorEnhanced
             public string QualityColor { get; } = null;
             public string Layer { get; } // Place where item is used: Ring, Bracelet, Torso ...s
             public List<ObjectProperty> Properties { get; } = new List<ObjectProperty>();
-            public UOObject(string serial, string layer, List<string> properties)
+            public UOObject(Item item)
             {
-                Serial = serial;
-                Layer = layer;
+                List<string> properties = item.Properties.Select(p =>
+                {
+                    return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(p.ToString().ToLower());
+                }).ToList();
+
+                Serial = "0x" + item.Serial.ToString("X");
+                Layer = item.Layer;
                 Name = properties[0]; // Name is always the first property
 
                 // Check Quality and QualityColor
@@ -383,7 +437,7 @@ namespace RazorEnhanced
                     // Ignore error o unexpected properties. Eg: Chivalry book that shows "10 Spells"
                     // in this case I'm expecting a string before a number and the regex fails with an empty string
                     // I don't care must about this kind of properties
-                    if (objectProperty.PropertyName == "") continue; 
+                    if (objectProperty.PropertyName == "") continue;
 
                     // Set Value and MaxValue
                     MatchCollection matches = Regex.Matches(property, @"[-+]?\d+");
@@ -457,13 +511,7 @@ namespace RazorEnhanced
                     if (itm.IsContainer) { continue; } // Skip other containers
                     if (itm.ItemID == 0x2259) { continue; } // Skip book of bods
 
-                    string serial = "0x" + itm.Serial.ToString("X");
-                    string layer = itm.Layer.ToString();
-                    UOObject item = new(serial, layer, itm.Properties.Select(p =>
-                    {
-                        return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(p.ToString().ToLower());
-                    }).ToList());
-
+                    UOObject item = new(itm);
                     scannedItemsList.Add(item);
                 }
             }
@@ -488,8 +536,8 @@ namespace RazorEnhanced
             table.Columns.Add("Layer", typeof(string));
             table.Columns.Add("Quality", typeof(string));
             table.Columns.Add("QualityColor", typeof(string));
+            specialColumnsCount = 4; // Quality is not considered a special column
 
-            Player.HeadMessage(33, "Updating Columns...");
             foreach (UOObject item in scannedItemsList.Cast<UOObject>())
             {
                 DataRow row = table.NewRow();
@@ -527,13 +575,12 @@ namespace RazorEnhanced
         }
         private void UpdateStatusBar()
         {
-            int number_of_fixed_columsn = 4; // Serial, Name, Layer, QualityColor (hidden)
-            toolStripStatus_Result.Text = "Items found: " + scannedItemsList.Count + " - Proerties: " + (dataGrid.ColumnCount - number_of_fixed_columsn).ToString();
+            toolStripStatus_Result.Text = "Items found: " + scannedItemsList.Count + " - Proerties: " + (dataGrid.ColumnCount - specialColumnsCount).ToString();
         }
         private void UpdateComboBoxFilters()
         {
             checkedListBox_ColumnsFilter.Items.Clear();
-            
+
             checkedListBox_ColumnsFilter.Items.Add("ALL", true);
 
             // Get the list of column names from the dataGrid
@@ -549,6 +596,118 @@ namespace RazorEnhanced
                 checkedListBox_ColumnsFilter.Items.Add(column, true);
             }
         }
+
         #endregion
+        private void CmdFilter_Click(object sender, EventArgs e)
+        {
+            List<string> selectedProperties = new();
+
+            for (int i = 1; i < checkedListBox_ColumnsFilter.Items.Count; i++)
+            {
+                if (checkedListBox_ColumnsFilter.GetItemChecked(i))
+                {
+                    selectedProperties.Add(checkedListBox_ColumnsFilter.Items[i].ToString());
+                }
+            }
+
+            DataTable table = dataGrid.DataSource as DataTable;
+            List<DataRow> rowsToHide = new();
+
+            if (radioButton_AND.Checked)
+            {
+                foreach (DataRow row in table.Rows)
+                {
+                    foreach (string property in selectedProperties)
+                    {
+                        if (row[property].ToString() == "")
+                        {
+                            rowsToHide.Add(row);
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                foreach (DataRow row in table.Rows)
+                {
+                    foreach (string property in selectedProperties)
+                    {
+                        if (row[property].ToString() != "")
+                        {
+                            break;
+                        }
+                        rowsToHide.Add(row);
+                        break;
+                    }
+                }
+            }
+
+            foreach (var row in rowsToHide)
+            {
+                table.Rows.Remove(row);
+            }
+
+            dataGrid.Visible = false;
+            dataGrid.DataSource = table;
+            dataGrid.Visible = true;
+            dataGrid.Refresh();
+        }
+
+        /*private void CmdFilter_Click(object sender, EventArgs e)
+        {
+            //RefreshDataGrid();
+
+            List<string> selectedProperties = new();
+
+            for (int i = 1; i < checkedListBox_ColumnsFilter.Items.Count; i++)
+            {
+                if (checkedListBox_ColumnsFilter.GetItemChecked(i))
+                {
+                    selectedProperties.Add(checkedListBox_ColumnsFilter.Items[i].ToString());
+                }
+            }
+
+            List<DataGridViewRow> rowsToHide = new();
+
+
+            if (radioButton_AND.Checked)
+            {
+                foreach (DataGridViewRow row in dataGrid.Rows)
+                {
+                    foreach (string property in selectedProperties)
+                    {
+                        if (row.Cells[property].Value.ToString() == "")
+                        {
+                            rowsToHide.Add(row);
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                foreach (DataGridViewRow row in dataGrid.Rows)
+                {
+                    foreach (string property in selectedProperties)
+                    {
+                        if (row.Cells[property].Value.ToString() != "")
+                        {
+                            break;
+                        }
+                        rowsToHide.Add(row);
+                        break;
+                    }
+                }
+            }
+
+
+            foreach (var row in rowsToHide)
+            {
+                dataGrid.Rows.Remove(row);
+            }
+        }
+        */
+
     }
 }
