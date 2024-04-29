@@ -617,6 +617,25 @@ namespace RazorEnhanced
             dataGrid.Visible = false;
             dataGrid.DataSource = table;
             dataGrid.Columns["QualityColor"].Visible = false;
+
+            // This messy section is used to sort the columns in a specific order
+            /////////////////////////////////////////
+            var list = from DataGridViewColumn c in dataGrid.Columns
+                       orderby c.HeaderText == "Serial" ? 0 :
+                               c.HeaderText == "Name" ? 1 :
+                               c.HeaderText == "Layer" ? 2 :
+                               c.HeaderText == "Quality" ? 3 :
+                               c.HeaderText == "QualityColor" ? 4 :
+                               5, c.HeaderText
+                       select c;
+
+            int i = 0;
+            foreach (DataGridViewColumn c in list)
+            {
+                c.DisplayIndex = i++;
+            }
+            /////////////////////////////////////////
+
             dataGrid.Visible = true;
 
             if (dataGrid.Rows.Count > 0)

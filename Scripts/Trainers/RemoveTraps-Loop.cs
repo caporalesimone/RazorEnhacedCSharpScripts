@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Ultima;
 
 //#forcedebug
 namespace RazorEnhanced
 {
     internal class RemoveTrapsLoop
     {
-        private readonly uint gumpID = 946198531;
+        private uint gumpID;
 
         private class Cell
         {
@@ -70,13 +71,24 @@ namespace RazorEnhanced
             Target.WaitForTarget(6000, false);
             Target.TargetExecute(trapSerial);
 
-            Gumps.WaitForGump(gumpID, 5000);
+            int safeCounter = 3000;
+            while (!Gumps.HasGump() && safeCounter-- > 0)
+            {
+                Misc.Pause(1);
+            }
+            if (safeCounter <= 0)
+            {
+                Misc.SendMessage("Gump not found", 33);
+                return;
+            }
+
+            gumpID = Gumps.CurrentGump();
 
             string game = Gumps.GetGumpRawData(gumpID);
             Cell.CellType[,] gameBoard = CalculateGameMatrix(ParseGameGump(game));
             Direction[,] visited = new Direction[gameBoard.GetLength(0), gameBoard.GetLength(1)];
 
-            int safeCounter = 30;
+            safeCounter = 30;
             while (true)
             {
                 bool gameResult = PlayGame(gameBoard, ref visited);
@@ -277,23 +289,6 @@ namespace RazorEnhanced
                     }
                 }
 
-                // Try moving right
-                if (col + 1 < N && game_matrix[row, col + 1] != Cell.CellType.TraversedCell && visited[row, col + 1] == Direction.Unknown)
-                {
-                    Player.HeadMessage(33, "→");
-                    if (MoveTo(Direction.Right))
-                    {
-                        visited[row, col] = Direction.Right;
-                        col++;
-                        continue;
-                    }
-                    else
-                    {
-                        visited[row, col + 1] = Direction.Invalid;
-                        return false;
-                    }
-                }
-
                 // Try moving left
                 if (col - 1 >= 0 && game_matrix[row, col - 1] != Cell.CellType.TraversedCell && visited[row, col - 1] == Direction.Unknown)
                 {
@@ -307,6 +302,23 @@ namespace RazorEnhanced
                     else
                     {
                         visited[row, col - 1] = Direction.Invalid;
+                        return false;
+                    }
+                }
+
+                // Try moving right
+                if (col + 1 < N && game_matrix[row, col + 1] != Cell.CellType.TraversedCell && visited[row, col + 1] == Direction.Unknown)
+                {
+                    Player.HeadMessage(33, "→");
+                    if (MoveTo(Direction.Right))
+                    {
+                        visited[row, col] = Direction.Right;
+                        col++;
+                        continue;
+                    }
+                    else
+                    {
+                        visited[row, col + 1] = Direction.Invalid;
                         return false;
                     }
                 }
