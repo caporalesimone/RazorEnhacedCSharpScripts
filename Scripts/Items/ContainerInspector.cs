@@ -282,7 +282,6 @@ namespace RazorEnhanced
             ResetDetailsPanel();
             TargetContainerAndUpdateObjectsList(checkRecursiveScan.Checked);
             RefreshDataGrid();
-            UpdateStatusBar();
             UpdateComboBoxFilters();
 
             originalTableWithoutFilters = new DataTable();
@@ -640,6 +639,8 @@ namespace RazorEnhanced
 
             if (dataGrid.Rows.Count > 0)
                 dataGrid.Rows[0].Selected = true;
+
+            UpdateStatusBar();
         }
         private void ResetDetailsPanel()
         {
