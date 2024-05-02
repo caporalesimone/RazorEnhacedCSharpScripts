@@ -15,6 +15,13 @@ Troubleshooting for the error: "Error (CS0006) at line 0: Metadata file 'Newtons
 5- Restart Razor Enhanced and the script
  */
 
+/*
+    Version 1.0: 
+        - Initial release (Tnx to @Denzen)
+    Version 1.1:
+        - Removed the container check because jewelry boxes are not considered containers. (Tnx to @BigDa)
+*/
+
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -31,7 +38,7 @@ namespace RazorEnhanced
 {
     class ContainerInspector : Form
     {
-        private const string version = "1.0";
+        private const string version = "1.1";
 
         #region User Interface
         private readonly System.Drawing.Font defaultFontRegular = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -630,7 +637,8 @@ namespace RazorEnhanced
             scannedItemsList.Clear();
             Item container = Items.FindBySerial(new Target().PromptTarget("Select a container"));
 
-            if ((container == null) || ((container.IsContainer == false) && (container.IsCorpse == false)))
+            //Removed the container check because jewelry boxes are not considered containers
+            if (container == null)
             {
                 Player.HeadMessage(33, "This is not a valid container. Select only containers or corpses");
                 return;
@@ -638,6 +646,7 @@ namespace RazorEnhanced
 
             Items.UseItem(container);
             Misc.Pause(800);
+
             Player.HeadMessage(33, "Scanning container...");
             var found = FindItems(container, recursiveScan);
             if (found != null && found.Count > 0)
