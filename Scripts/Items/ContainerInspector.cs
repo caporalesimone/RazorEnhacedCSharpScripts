@@ -22,6 +22,8 @@ namespace RazorEnhanced
 {
     class ContainerInspector : Form
     {
+        private const string version = "1.0";
+
         #region User Interface
         private readonly System.Drawing.Font defaultFontRegular = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
         private readonly System.Drawing.Font defaultFontBold = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -54,7 +56,7 @@ namespace RazorEnhanced
         public ContainerInspector()
         {
             InitializeComponent();
-            this.Text = this.Text + " - " + Player.Name;
+            this.Text = this.Text + " - " + Player.Name + " - Version: " + version;
         }
         public void Run()
         {
