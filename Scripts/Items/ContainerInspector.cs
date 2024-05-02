@@ -58,8 +58,8 @@ namespace RazorEnhanced
         }
         public void Run()
         {
+            this.Icon = System.Drawing.Icon.FromHandle(Items.GetImage(0x2235, 0).GetHicon());
             InitializeOtherFormComponentsAndEvents();
-
             Application.EnableVisualStyles();
             Application.Run(this); // This is blocking. Will return only when form is closed
         }
@@ -387,16 +387,22 @@ namespace RazorEnhanced
         }
         private void CmdExport_Click(object sender, EventArgs e)
         {
+            string file = FileInputBox.Show("Export table into a file", "Insert filename that will be stored in DATA\nfolder of Razor Enhanced.\n", "ContainerInspector.json", ".json", this);
+            if (string.IsNullOrEmpty(file)) return;
+
             string _data_folder = Path.GetFullPath(Path.Combine(Assistant.Engine.RootPath, "Data"));
-            FileInfo fileName = new FileInfo(Path.Combine(_data_folder, "ContainerInspector.json"));
+            FileInfo fileName = new FileInfo(Path.Combine(_data_folder, file));
             string json = JsonConvert.SerializeObject(scannedItemsList, Formatting.Indented);
             File.WriteAllText(fileName.FullName, json);
             MessageBox.Show("JSON File exported in path: " + fileName.FullName, "File Exported", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         private void CmdImport_Click(object sender, EventArgs e)
         {
+            string file = FileInputBox.Show("Import table from a file", "Insert filename that will be imported\nfrom DATA folder of Razor Enhanced.\n", "ContainerInspector.json", ".json", this);
+            if (string.IsNullOrEmpty(file)) return;
+
             string _data_folder = Path.GetFullPath(Path.Combine(Assistant.Engine.RootPath, "Data"));
-            FileInfo fileName = new (Path.Combine(_data_folder, "ContainerInspector.json"));
+            FileInfo fileName = new(Path.Combine(_data_folder, file));
 
             if (File.Exists(fileName.FullName))
             {
@@ -744,6 +750,89 @@ namespace RazorEnhanced
                 List<string> columnsToIgnore = new() { "Serial", "Name", "Layer", "Quality", "QualityColor" };
                 if (columnsToIgnore.Contains(column)) continue;
                 checkedListBox_ColumnsFilter.Items.Add(column, false);
+            }
+        }
+        #endregion
+
+        #region FileInputBox
+        public class FileInputBox
+        {
+            public static string Show(string title, string description, string text, string fileExtension, Form parentForm)
+            {
+                using var form = new Form();
+                form.Icon = System.Drawing.Icon.FromHandle(Items.GetImage(0x2235, 0).GetHicon());
+                form.StartPosition = FormStartPosition.CenterParent;
+                form.FormBorderStyle = FormBorderStyle.FixedSingle;
+                form.MaximizeBox = false;
+                form.MinimizeBox = false;
+
+                form.Text = title;
+                form.Width = 250;
+                form.Height = 130;
+
+                var label = new Label()
+                {
+                    Text = description,
+                    Dock = DockStyle.Top,
+                    AutoSize = true,
+                    TextAlign = ContentAlignment.TopLeft,
+                    Width = form.Width - 20,
+                    //Margin = new Padding(10, 10, 10, 10)
+                };
+
+                var textBox = new TextBox()
+                {
+                    Dock = DockStyle.Fill,
+                    Text = text,
+                    Top = 20
+                    
+                };
+
+                var okButton = new Button()
+                {
+                    Text = "OK",
+                    DialogResult = DialogResult.OK,
+                    Dock = DockStyle.Left,
+                    Width = 100
+                };
+
+                var cancelButton = new Button()
+                {
+                    Text = "Cancel",
+                    DialogResult = DialogResult.Cancel,
+                    Dock = DockStyle.Right,
+                    Width = 100
+                };
+
+                var buttonPanel = new Panel()
+                {
+                    Dock = DockStyle.Bottom,
+                    Height = 40
+                };
+
+                buttonPanel.Controls.Add(okButton);
+                buttonPanel.Controls.Add(cancelButton);
+
+                form.Controls.Add(textBox);
+                form.Controls.Add(label);
+                form.Controls.Add(buttonPanel);
+
+                form.AcceptButton = okButton;
+                form.CancelButton = cancelButton;
+
+                if (form.ShowDialog(parentForm) == DialogResult.OK)
+                {
+                    if (textBox.Text.EndsWith(fileExtension))
+                    {
+                        return textBox.Text;
+                    }
+                    else
+                    {
+                        return textBox.Text + fileExtension;
+                    }
+                }
+
+                return null;
             }
         }
         #endregion
