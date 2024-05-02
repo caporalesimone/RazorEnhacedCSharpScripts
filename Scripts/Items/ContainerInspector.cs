@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -25,7 +26,6 @@ namespace RazorEnhanced
         private DataGridView dataGrid;
         private Button cmdGetSelected;
         private PictureBox pictureBoxSelectedObj;
-        private ListBox selectedPropList;
         private CheckBox checkRecursiveScan;
         private StatusStrip statusStrip;
         private ToolStripStatusLabel toolStripStatus_Result;
@@ -34,13 +34,14 @@ namespace RazorEnhanced
         private Button cmdFilter;
         private RadioButton radioButton_OR;
         private RadioButton radioButton_AND;
+        private RichTextBox Txt_SelectedItmProp;
+        private DataTable originalTableWithoutFilters;
         #endregion
 
         #region Global Variables
         private List<UOObject> scannedItemsList = new();
         private List<UOObject> scannedItemsList_CopyForFiltering = new();
         private int specialColumnsCount;
-        private DataTable originalTableWithoutFilters;
         #endregion
 
         #region Constructor, Run and Initializations
@@ -62,7 +63,6 @@ namespace RazorEnhanced
             this.dataGrid = new System.Windows.Forms.DataGridView();
             this.cmdGetSelected = new System.Windows.Forms.Button();
             this.pictureBoxSelectedObj = new System.Windows.Forms.PictureBox();
-            this.selectedPropList = new System.Windows.Forms.ListBox();
             this.checkRecursiveScan = new System.Windows.Forms.CheckBox();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.toolStripStatus_Result = new System.Windows.Forms.ToolStripStatusLabel();
@@ -71,6 +71,7 @@ namespace RazorEnhanced
             this.cmdFilter = new System.Windows.Forms.Button();
             this.radioButton_OR = new System.Windows.Forms.RadioButton();
             this.radioButton_AND = new System.Windows.Forms.RadioButton();
+            this.Txt_SelectedItmProp = new System.Windows.Forms.RichTextBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSelectedObj)).BeginInit();
             this.statusStrip.SuspendLayout();
@@ -123,15 +124,6 @@ namespace RazorEnhanced
             this.pictureBoxSelectedObj.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBoxSelectedObj.TabIndex = 3;
             this.pictureBoxSelectedObj.TabStop = false;
-            // 
-            // selectedPropList
-            // 
-            this.selectedPropList.FormattingEnabled = true;
-            this.selectedPropList.ItemHeight = 20;
-            this.selectedPropList.Location = new System.Drawing.Point(12, 123);
-            this.selectedPropList.Name = "selectedPropList";
-            this.selectedPropList.Size = new System.Drawing.Size(155, 264);
-            this.selectedPropList.TabIndex = 4;
             // 
             // checkRecursiveScan
             // 
@@ -214,9 +206,19 @@ namespace RazorEnhanced
             this.radioButton_AND.UseVisualStyleBackColor = true;
             this.radioButton_AND.CheckedChanged += new System.EventHandler(this.RadioButton_AND_CheckedChanged);
             // 
+            // Txt_SelectedItmProp
+            // 
+            this.Txt_SelectedItmProp.BackColor = System.Drawing.Color.Black;
+            this.Txt_SelectedItmProp.Location = new System.Drawing.Point(12, 123);
+            this.Txt_SelectedItmProp.Name = "Txt_SelectedItmProp";
+            this.Txt_SelectedItmProp.Size = new System.Drawing.Size(156, 267);
+            this.Txt_SelectedItmProp.TabIndex = 12;
+            this.Txt_SelectedItmProp.Text = "";
+            // 
             // ContainerInspector
             // 
             this.ClientSize = new System.Drawing.Size(1258, 744);
+            this.Controls.Add(this.Txt_SelectedItmProp);
             this.Controls.Add(this.radioButton_AND);
             this.Controls.Add(this.radioButton_OR);
             this.Controls.Add(this.cmdFilter);
@@ -224,7 +226,6 @@ namespace RazorEnhanced
             this.Controls.Add(this.checkedListBox_ColumnsFilter);
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.checkRecursiveScan);
-            this.Controls.Add(this.selectedPropList);
             this.Controls.Add(this.pictureBoxSelectedObj);
             this.Controls.Add(this.cmdGetSelected);
             this.Controls.Add(this.dataGrid);
@@ -282,7 +283,7 @@ namespace RazorEnhanced
             ResetDetailsPanel();
             TargetContainerAndUpdateObjectsList(checkRecursiveScan.Checked);
             RefreshDataGrid();
-            UpdateComboBoxFilters();
+            UpdateCheckedListBoxFilters();
 
             originalTableWithoutFilters = new DataTable();
             originalTableWithoutFilters = (dataGrid.DataSource as DataTable).Copy();
@@ -368,21 +369,31 @@ namespace RazorEnhanced
             {
                 try
                 {
-                    Item selected = Items.FindBySerial(Convert.ToInt32(dataGrid.SelectedRows[0].Cells["Serial"].Value.ToString(), 16));
-                    pictureBoxSelectedObj.Image = Items.GetImage(selected.ItemID, selected.Hue);
+                    string serial = dataGrid.SelectedRows[0].Cells["Serial"].Value.ToString();
+                    UOObject foundItem = scannedItemsList.Find(match: item => item.Serial == serial);
+                    pictureBoxSelectedObj.Image = Items.GetImage(foundItem.ItemID, foundItem.Hue);
 
-                    selectedPropList.Items.Clear();
-                    foreach (var prop in selected.Properties)
+                    Txt_SelectedItmProp.Clear();
+                    Txt_SelectedItmProp.Text = "";
+                    Txt_SelectedItmProp.SelectionAlignment = HorizontalAlignment.Center;
+                    Txt_SelectedItmProp.SelectionFont = defaultFontBold;
+                    Txt_SelectedItmProp.SelectionColor = Color.Yellow;
+                    Txt_SelectedItmProp.AppendText(foundItem.Name + "\n");
+                    Txt_SelectedItmProp.SelectionFont = defaultFontRegular;
+
+                    for (int i = 0; i < foundItem.Properties.Count; i++)
                     {
-                        string rawProp = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(prop.ToString().ToLower());
-                        if (rawProp.ToLower().Contains("<basefont"))
-                        {
-                            int start = rawProp.IndexOf(">") + 1;
-                            int end = rawProp.Length;
-                            rawProp = rawProp.Substring(start, end - start).Trim();
-                        }
-                        selectedPropList.Items.Add(rawProp);
+                        string rawProp = foundItem.Properties[i].RawDescription;
+                        Txt_SelectedItmProp.SelectionStart = Txt_SelectedItmProp.TextLength;
+                        Txt_SelectedItmProp.SelectionColor = Color.White;
+                        Txt_SelectedItmProp.SelectionLength = 0;
+                        Txt_SelectedItmProp.AppendText(rawProp + "\n");
                     }
+
+                    Txt_SelectedItmProp.SelectionStart = Txt_SelectedItmProp.TextLength;
+                    Txt_SelectedItmProp.SelectionLength = 0;
+                    Txt_SelectedItmProp.SelectionColor = System.Drawing.ColorTranslator.FromHtml(foundItem.QualityColor);
+                    Txt_SelectedItmProp.AppendText(foundItem.Quality + "\n");
                 }
                 catch
                 {
@@ -442,6 +453,8 @@ namespace RazorEnhanced
             public string Name { get; }
             public string Quality { get; } = null;
             public string QualityColor { get; } = null;
+            public int Hue { get; }
+            public int ItemID { get; }
             public string Layer { get; } // Place where item is used: Ring, Bracelet, Torso ...s
             public List<ObjectProperty> Properties { get; } = new List<ObjectProperty>();
             public UOObject(Item item)
@@ -454,6 +467,8 @@ namespace RazorEnhanced
                 Serial = "0x" + item.Serial.ToString("X");
                 Layer = item.Layer;
                 Name = properties[0]; // Name is always the first property
+                Hue = item.Hue;
+                ItemID = item.ItemID;
 
                 // Check Quality and QualityColor
                 string lastProperty = properties[properties.Count - 1];
@@ -645,13 +660,13 @@ namespace RazorEnhanced
         private void ResetDetailsPanel()
         {
             pictureBoxSelectedObj.Image = null;
-            selectedPropList.Items.Clear();
+            Txt_SelectedItmProp.Clear();
         }
         private void UpdateStatusBar()
         {
             toolStripStatus_Result.Text = "Items found: " + scannedItemsList.Count + " - Proerties: " + (dataGrid.ColumnCount - specialColumnsCount).ToString();
         }
-        private void UpdateComboBoxFilters()
+        private void UpdateCheckedListBoxFilters()
         {
             checkedListBox_ColumnsFilter.Items.Clear();
 
