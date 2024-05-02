@@ -4,10 +4,14 @@
 // Copyright Caporale Simone - 2024
 
 //#forcedebug 
+//#assembly <Newtonsoft.Json.dll>
+
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -41,6 +45,8 @@ namespace RazorEnhanced
         #region Global Variables
         private List<UOObject> scannedItemsList = new();
         private List<UOObject> scannedItemsList_CopyForFiltering = new();
+        private Button cmdExport;
+        private Button cmdImport;
         private int specialColumnsCount;
         #endregion
 
@@ -72,6 +78,8 @@ namespace RazorEnhanced
             this.radioButton_OR = new System.Windows.Forms.RadioButton();
             this.radioButton_AND = new System.Windows.Forms.RadioButton();
             this.Txt_SelectedItmProp = new System.Windows.Forms.RichTextBox();
+            this.cmdExport = new System.Windows.Forms.Button();
+            this.cmdImport = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSelectedObj)).BeginInit();
             this.statusStrip.SuspendLayout();
@@ -215,9 +223,31 @@ namespace RazorEnhanced
             this.Txt_SelectedItmProp.TabIndex = 12;
             this.Txt_SelectedItmProp.Text = "";
             // 
+            // cmdExport
+            // 
+            this.cmdExport.Location = new System.Drawing.Point(1000, 11);
+            this.cmdExport.Name = "cmdExport";
+            this.cmdExport.Size = new System.Drawing.Size(120, 26);
+            this.cmdExport.TabIndex = 13;
+            this.cmdExport.Text = "Export Data";
+            this.cmdExport.UseVisualStyleBackColor = true;
+            this.cmdExport.Click += new System.EventHandler(this.CmdExport_Click);
+            // 
+            // cmdImport
+            // 
+            this.cmdImport.Location = new System.Drawing.Point(1126, 11);
+            this.cmdImport.Name = "cmdImport";
+            this.cmdImport.Size = new System.Drawing.Size(120, 26);
+            this.cmdImport.TabIndex = 14;
+            this.cmdImport.Text = "Import Data";
+            this.cmdImport.UseVisualStyleBackColor = true;
+            this.cmdImport.Click += new System.EventHandler(this.CmdImport_Click);
+            // 
             // ContainerInspector
             // 
             this.ClientSize = new System.Drawing.Size(1258, 744);
+            this.Controls.Add(this.cmdImport);
+            this.Controls.Add(this.cmdExport);
             this.Controls.Add(this.Txt_SelectedItmProp);
             this.Controls.Add(this.radioButton_AND);
             this.Controls.Add(this.radioButton_OR);
@@ -280,13 +310,8 @@ namespace RazorEnhanced
             var window_state = this.WindowState;
             this.WindowState = FormWindowState.Minimized;
 
-            ResetDetailsPanel();
             TargetContainerAndUpdateObjectsList(checkRecursiveScan.Checked);
-            RefreshDataGrid();
-            UpdateCheckedListBoxFilters();
-
-            originalTableWithoutFilters = new DataTable();
-            originalTableWithoutFilters = (dataGrid.DataSource as DataTable).Copy();
+            UpdateAllUI();
 
             this.WindowState = window_state;
         }
@@ -359,6 +384,34 @@ namespace RazorEnhanced
             }
 
             RefreshDataGrid();
+        }
+        private void CmdExport_Click(object sender, EventArgs e)
+        {
+            string _data_folder = Path.GetFullPath(Path.Combine(Assistant.Engine.RootPath, "Data"));
+            FileInfo fileName = new FileInfo(Path.Combine(_data_folder, "ContainerInspector.json"));
+            string json = JsonConvert.SerializeObject(scannedItemsList, Formatting.Indented);
+            File.WriteAllText(fileName.FullName, json);
+            MessageBox.Show("JSON File exported in path: " + fileName.FullName, "File Exported", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+        }
+        private void CmdImport_Click(object sender, EventArgs e)
+        {
+            string _data_folder = Path.GetFullPath(Path.Combine(Assistant.Engine.RootPath, "Data"));
+            FileInfo fileName = new (Path.Combine(_data_folder, "ContainerInspector.json"));
+
+            if (File.Exists(fileName.FullName))
+            {
+                string json = File.ReadAllText(fileName.FullName);
+
+                scannedItemsList = JsonConvert.DeserializeObject<List<UOObject>>(json);
+                scannedItemsList_CopyForFiltering = new List<UOObject>(scannedItemsList);
+                UpdateAllUI();
+                MessageBox.Show("JSON File Imported", "File Imported", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show("File not found: " + fileName.FullName, "File Not Found", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
         #endregion
 
@@ -449,16 +502,18 @@ namespace RazorEnhanced
                 public string RawDescription { get; set; }
             }
 
-            public string Serial { get; }
-            public string Name { get; }
-            public string Quality { get; } = null;
-            public string QualityColor { get; } = null;
-            public int Hue { get; }
-            public int ItemID { get; }
-            public string Layer { get; } // Place where item is used: Ring, Bracelet, Torso ...s
-            public List<ObjectProperty> Properties { get; } = new List<ObjectProperty>();
+            public string Serial { get; set; }
+            public string Name { get; set; }
+            public string Quality { get; set; } = null;
+            public string QualityColor { get; set; } = null;
+            public int Hue { get; set; }
+            public int ItemID { get; set; }
+            public string Layer { get; set; } // Place where item is used: Ring, Bracelet, Torso ...s
+            public List<ObjectProperty> Properties { get; set; } = new List<ObjectProperty>();
             public UOObject(Item item)
             {
+                if (item == null) return;
+
                 List<string> properties = item.Properties.Select(p =>
                 {
                     return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(p.ToString().ToLower());
@@ -594,6 +649,15 @@ namespace RazorEnhanced
         #endregion
 
         #region Other UI Functions
+        private void UpdateAllUI()
+        {
+            ResetDetailsPanel();
+            RefreshDataGrid();
+            UpdateCheckedListBoxFilters();
+
+            originalTableWithoutFilters = new DataTable();
+            originalTableWithoutFilters = (dataGrid.DataSource as DataTable).Copy();
+        }
         private void RefreshDataGrid()
         {
             Player.HeadMessage(33, "Creating Table...");
@@ -683,7 +747,6 @@ namespace RazorEnhanced
                 checkedListBox_ColumnsFilter.Items.Add(column, false);
             }
         }
-
         #endregion
     }
 }
