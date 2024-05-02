@@ -40,13 +40,13 @@ namespace RazorEnhanced
         private RadioButton radioButton_AND;
         private RichTextBox Txt_SelectedItmProp;
         private DataTable originalTableWithoutFilters;
+        private Button cmdExport;
+        private Button cmdImport;
         #endregion
 
         #region Global Variables
         private List<UOObject> scannedItemsList = new();
         private List<UOObject> scannedItemsList_CopyForFiltering = new();
-        private Button cmdExport;
-        private Button cmdImport;
         private int specialColumnsCount;
         #endregion
 
