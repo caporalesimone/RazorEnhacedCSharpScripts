@@ -392,7 +392,6 @@ namespace RazorEnhanced
             string json = JsonConvert.SerializeObject(scannedItemsList, Formatting.Indented);
             File.WriteAllText(fileName.FullName, json);
             MessageBox.Show("JSON File exported in path: " + fileName.FullName, "File Exported", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
         }
         private void CmdImport_Click(object sender, EventArgs e)
         {
