@@ -8,7 +8,7 @@
 
 /*
 Troubleshooting for the error: "Error (CS0006) at line 0: Metadata file 'Newtonsoft.Json.dll' could not be found"
-1- Locate the file AssemblyInfo.cs in the RazorEnhanced folder
+1- Locate the file Assemblies.cfg in the RazorEnhanced folder
 2- Open the file with a text editor
 3- Add Newtonsoft.Json.dll at the end of the file and save
 4- Delete the line #assembly <Newtonsoft.Json.dll> from this script
