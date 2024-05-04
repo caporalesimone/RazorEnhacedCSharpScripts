@@ -63,6 +63,7 @@
     <Compile Include="Scripts\Gathering\PlantsPicker.cs" />
     <Compile Include="Scripts\Libs\loot_container.cs" />
     <Compile Include="Scripts\Misc\LockpickChest.cs" />
+    <Compile Include="Scripts\Trainers\RemoveTrapsTrainer.cs" />
     <Compile Include="Scripts\Trainers\RemoveTraps-Loop.cs" />
     <Compile Include="Test\TestGump.cs" />
     <Compile Include="Experimental\SharedMemory\Writer.cs" />
