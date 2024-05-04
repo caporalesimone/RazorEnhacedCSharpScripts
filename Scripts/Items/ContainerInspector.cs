@@ -4,7 +4,7 @@
 // Copyright Caporale Simone - 2024
 
 //#forcedebug 
-//#assembly <Newtonsoft.Json.dll>
+//#assembly "C:\UltimaOnline\RazorEnhanced\Newtonsoft.Json.dll"
 
 /*
 Troubleshooting for the error: "Error (CS0006) at line 0: Metadata file 'Newtonsoft.Json.dll' could not be found"
@@ -20,6 +20,9 @@ Troubleshooting for the error: "Error (CS0006) at line 0: Metadata file 'Newtons
         - Initial release (Tnx to @Denzen)
     Version 1.1:
         - Removed the container check because jewelry boxes are not considered containers. (Tnx to @BigDa)
+    Version 1.2:
+        - Now, when the filter is applied, only the properties actually available are shown and not all of them
+        - Fixed a bug on the filter button. Now the filter should work correctly.
 */
 
 using Newtonsoft.Json;
@@ -38,7 +41,7 @@ namespace RazorEnhanced
 {
     class ContainerInspector : Form
     {
-        private const string version = "1.1";
+        private const string version = "1.2";
 
         #region User Interface
         private readonly System.Drawing.Font defaultFontRegular = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -330,6 +333,7 @@ namespace RazorEnhanced
 
             TargetContainerAndUpdateObjectsList(checkRecursiveScan.Checked);
             UpdateAllUI();
+            originalTableWithoutFilters = (dataGrid.DataSource as DataTable).Copy();
 
             this.WindowState = window_state;
         }
@@ -401,7 +405,7 @@ namespace RazorEnhanced
                 scannedItemsList.RemoveAll(item => item.Serial == serial);
             }
 
-            RefreshDataGrid();
+            UpdateAllUI();
         }
         private void CmdExport_Click(object sender, EventArgs e)
         {
@@ -679,9 +683,6 @@ namespace RazorEnhanced
             ResetDetailsPanel();
             RefreshDataGrid();
             UpdateCheckedListBoxFilters();
-
-            originalTableWithoutFilters = new DataTable();
-            originalTableWithoutFilters = (dataGrid.DataSource as DataTable).Copy();
         }
         private void RefreshDataGrid()
         {
@@ -757,6 +758,13 @@ namespace RazorEnhanced
         }
         private void UpdateCheckedListBoxFilters()
         {
+            // Store checked items
+            List<string> checkedItems = new();
+            foreach (var item in checkedListBox_ColumnsFilter.CheckedItems)
+            {
+                checkedItems.Add(item.ToString());
+            }
+
             checkedListBox_ColumnsFilter.Items.Clear();
 
             // Get the list of column names from the dataGrid
@@ -769,7 +777,9 @@ namespace RazorEnhanced
             {
                 List<string> columnsToIgnore = new() { "Serial", "Name", "Layer", "Quality", "QualityColor" };
                 if (columnsToIgnore.Contains(column)) continue;
-                checkedListBox_ColumnsFilter.Items.Add(column, false);
+
+                bool checkedItem = checkedItems.Contains(column);
+                checkedListBox_ColumnsFilter.Items.Add(column, checkedItem);
             }
         }
         #endregion
