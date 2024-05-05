@@ -1,3 +1,21 @@
+// Remove Traps Turbo Trainer
+// This scripts resolves the Remove Traps mini-game automatically.
+// 
+// Copyright Caporale Simone - 2024
+//
+// This version of the script is inspired from the UOAlive Discord Thread of Thomasthorun (Thanks).
+// I copied some ideas like the clicloc search for the gump and the gump size calculation.
+// I call it "Turbo Trainer" because it tries to match the actual path with known solutions to speed up the resolution.
+//
+// My benchmarks:
+//  Trap 3x3:  average 21 seconds
+//  Trap 5x5:  average 30 seconds
+
+/*
+    Version 1.0: 
+        - Initial release
+*/
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,7 +27,7 @@ namespace RazorEnhanced
 {
     internal class RemoveTrapsTurboTrainer
     {
-        const bool STORE_UNKNOWN_SOLUTIONS_ON_FILE = true; // If this flag is true, a file called RemoveTraps.txt will be created in the Data folder with any unknown solution found. Just for debug. All solutions should be known
+        private const bool STORE_UNKNOWN_SOLUTIONS_ON_FILE = true; // If this flag is true, a file called RemoveTraps.txt will be created in the Data folder with any unknown solution found. Just for debug. All solutions should be known
 
         private enum Dir
         {
@@ -121,12 +139,11 @@ namespace RazorEnhanced
                 var trap_elapsed     = (int)(DateTime.Now - trap_start).TotalSeconds;
                 var training_elapsed = (int)(DateTime.Now - training_session_start).TotalSeconds;
 
-                Misc.SendMessage($"============================================", 55);
-                Misc.SendMessage($"Solved Trap #{++counter:D4} in {trap_elapsed:D3} seconds", 55);
-                Misc.SendMessage($"Total training session elapsed {training_elapsed:D4} seconds", 55);
-                Misc.SendMessage($"Average trap resolution time: {((float)training_elapsed / (float)counter):000.0} seconds", 55);
-                Misc.SendMessage($"============================================", 55);
-                Misc.Pause(5000); // TODO: calculate the right time
+                Misc.SendMessage($"======================================", 55);
+                Misc.SendMessage($"Disarmed Trap #{++counter:D3} in {trap_elapsed:D3} seconds", 55);
+                Misc.SendMessage($"Total elapsed time: {training_elapsed:D4} seconds", 55);
+                Misc.SendMessage($"Average disarm time: {((float)training_elapsed / (float)counter):000.0} seconds", 55);
+                Misc.SendMessage($"======================================", 55);
             }
         }
         private void RemoveTrap(int trapSerial)
@@ -192,7 +209,7 @@ namespace RazorEnhanced
                 float solutionFitness = CalculatePathFitness(size, path, out List<Dir> foundSolution);
                 if (solutionFitness > 0)
                 {
-                    Misc.SendMessage($"Found a match in solution database with {solutionFitness:00.0}% match", 33);
+                    //Misc.SendMessage($"Found a match in solution database with {solutionFitness:00.0}% match", 33);
                     // I continue with the missing steps of the solution
                     for (int i = path.Count; i < foundSolution.Count; i++)
                     {
@@ -222,7 +239,7 @@ namespace RazorEnhanced
                     }
 
                     TryDirection = NextDirection(size, path, failedDirections);
-                    Misc.SendMessage($"Try: {DirectionToString(TryDirection)}", 33);
+                    //Misc.SendMessage($"Try: {DirectionToString(TryDirection)}", 33);
                     attemp = MoveTo(gumpID, (int)TryDirection);
                 }
 
@@ -233,7 +250,7 @@ namespace RazorEnhanced
                         if (STORE_UNKNOWN_SOLUTIONS_ON_FILE) StoreOnFileTheSolution(size, path);
                         return true;
                     case MoveResult.WrongTry:
-                        Misc.SendMessage($"Wrong: {DirectionToString(TryDirection)}", 33);
+                        //Misc.SendMessage($"Wrong: {DirectionToString(TryDirection)}", 33);
                         failedDirections.Add(TryDirection);
                         if (OpenTrap(trapSerial) != gumpID) return false;
                         break;
