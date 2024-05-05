@@ -9,7 +9,7 @@
 //
 // My benchmarks:
 //  Trap 3x3:  average 21 seconds
-//  Trap 5x5:  average 30 seconds
+//  Trap 5x5:  average 35 seconds
 
 /*
     Version 1.0: 
@@ -27,7 +27,7 @@ namespace RazorEnhanced
 {
     internal class RemoveTrapsTurboTrainer
     {
-        private const bool STORE_UNKNOWN_SOLUTIONS_ON_FILE = true; // If this flag is true, a file called RemoveTraps.txt will be created in the Data folder with any unknown solution found. Just for debug. All solutions should be known
+        private const bool STORE_UNKNOWN_SOLUTIONS_ON_FILE = true; // If this flag is true, a file called RemoveTraps.txt will be created in the Data folder with the solutions found. Just for debug. All solutions should be already known
 
         private enum Dir
         {
@@ -139,11 +139,11 @@ namespace RazorEnhanced
                 var trap_elapsed     = (int)(DateTime.Now - trap_start).TotalSeconds;
                 var training_elapsed = (int)(DateTime.Now - training_session_start).TotalSeconds;
 
-                Misc.SendMessage($"======================================", 55);
-                Misc.SendMessage($"Disarmed Trap #{++counter:D3} in {trap_elapsed:D3} seconds", 55);
-                Misc.SendMessage($"Total elapsed time: {training_elapsed:D4} seconds", 55);
-                Misc.SendMessage($"Average disarm time: {((float)training_elapsed / (float)counter):000.0} seconds", 55);
-                Misc.SendMessage($"======================================", 55);
+                Misc.SendMessage($"======================================", 149);
+                Misc.SendMessage($"Disarmed Trap #{++counter:D3} in {trap_elapsed:D3} seconds", 149);
+                Misc.SendMessage($"Total elapsed time: {training_elapsed:D4} seconds", 149);
+                Misc.SendMessage($"Average disarm time: {((float)training_elapsed / (float)counter):000.0} seconds", 149);
+                Misc.SendMessage($"======================================", 149);
             }
         }
         private void RemoveTrap(int trapSerial)
@@ -152,7 +152,7 @@ namespace RazorEnhanced
             if (gumpID == 0) return;
 
             int size = CalculateTrapSize(gumpID);
-            Misc.SendMessage($"Trap size: {size}x{size}", 33);
+            Misc.SendMessage($"Trap size: {size}x{size}", 149);
 
             PlayGame(gumpID, size, trapSerial);
         }
@@ -205,7 +205,7 @@ namespace RazorEnhanced
             int SafeCounter = 0;
             while (SafeCounter++ < 50)
             {
-                Misc.SendMessage($"Attempt #{SafeCounter}", 33);
+                Misc.SendMessage($"Attempt #{SafeCounter}", 149);
                 float solutionFitness = CalculatePathFitness(size, path, out List<Dir> foundSolution);
                 if (solutionFitness > 0)
                 {
@@ -239,9 +239,12 @@ namespace RazorEnhanced
                     }
 
                     TryDirection = NextDirection(size, path, failedDirections);
-                    //Misc.SendMessage($"Try: {DirectionToString(TryDirection)}", 33);
+                    //Misc.SendMessage($"Try: {DirectionToString(TryDirection)}", 149);
                     attemp = MoveTo(gumpID, (int)TryDirection);
                 }
+
+                string pathString = DirectionListToString(path);
+                Misc.SendMessage($"Path: {pathString} | Next: {DirectionToString(TryDirection)}", 149);
 
                 switch (attemp)
                 {
@@ -250,7 +253,7 @@ namespace RazorEnhanced
                         if (STORE_UNKNOWN_SOLUTIONS_ON_FILE) StoreOnFileTheSolution(size, path);
                         return true;
                     case MoveResult.WrongTry:
-                        //Misc.SendMessage($"Wrong: {DirectionToString(TryDirection)}", 33);
+                        //Misc.SendMessage($"Wrong: {DirectionToString(TryDirection)}", 149);
                         failedDirections.Add(TryDirection);
                         if (OpenTrap(trapSerial) != gumpID) return false;
                         break;
@@ -261,9 +264,6 @@ namespace RazorEnhanced
                     case MoveResult.SomethingWentWrong:
                         return false;
                 }
-
-                string pathString = DirectionListToString(path);
-                Misc.SendMessage($"Path: {pathString}", 33);
             }
             Misc.SendMessage("Failed: Too many tries", 33);
             return true;
@@ -313,24 +313,24 @@ namespace RazorEnhanced
                         col--;
                         break;
                     default:
-                        Misc.SendMessage("Something Wrong");
+                        Misc.SendMessage("Something Wrong", 33);
                         return Dir.Invalid;
                 }
 
-                // Verifica che la posizione sia all'interno della matrice
+                // Check if the position is inside the matrix
                 if (row < 0 || row >= N || col < 0 || col >= N)
                 {
-                    Misc.SendMessage("La posizione è fuori dalla matrice.");
+                    Misc.SendMessage("NextDirection failed: position outside the matrix", 33);
                     return Dir.Invalid;
                 }
             }
 
             // Verify next possible steps
             List<Dir> possibleSteps = new List<Dir>();
-            if (row > 0 && previousSteps.LastOrDefault() != Dir.Down) possibleSteps.Add(Dir.Up);
+            if (col < N - 1 && previousSteps.LastOrDefault() != Dir.Left) possibleSteps.Add(Dir.Right);
             if (row < N - 1 && previousSteps.LastOrDefault() != Dir.Up) possibleSteps.Add(Dir.Down);
             if (col > 0 && previousSteps.LastOrDefault() != Dir.Right) possibleSteps.Add(Dir.Left);
-            if (col < N - 1 && previousSteps.LastOrDefault() != Dir.Left) possibleSteps.Add(Dir.Right);
+            if (row > 0 && previousSteps.LastOrDefault() != Dir.Down) possibleSteps.Add(Dir.Up);
 
             // Removes all alredy failed directions
             possibleSteps.RemoveAll(step => failedDirections.Contains(step));
