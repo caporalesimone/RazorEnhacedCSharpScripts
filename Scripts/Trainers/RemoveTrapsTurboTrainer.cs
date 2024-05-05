@@ -8,8 +8,9 @@
 // I call it "Turbo Trainer" because it tries to match the actual path with known solutions to speed up the resolution.
 //
 // My benchmarks:
-//  Trap 3x3:  average 21 seconds
-//  Trap 5x5:  average 35 seconds
+//  Trap 3x3:  average 27 seconds on 356 tries
+//  Trap 4x4:  average 33 seconds om 100 tries
+//  Trap 5x5:  average 35 seconds om 245 tries
 
 /*
     Version 1.0: 
@@ -122,12 +123,16 @@ namespace RazorEnhanced
             new () { Dir.Right, Dir.Right, Dir.Down, Dir.Right, Dir.Right, Dir.Down, Dir.Left, Dir.Left, Dir.Left, Dir.Left, Dir.Down, Dir.Down, Dir.Right, Dir.Right, Dir.Right, Dir.Right },
         };
 
+        private readonly Target target;
+        private readonly Journal journal;
+
         public RemoveTrapsTurboTrainer()
         {
+            target = new();
+            journal = new();
         }
         public void Run()
         {
-            Target target = new();
             int trapSerial = target.PromptTarget("Select the trap to disarm");
 
             int counter = 0;
@@ -270,7 +275,6 @@ namespace RazorEnhanced
         }
         private MoveResult MoveTo(uint gumpID, int direction)
         {
-            Journal journal = new();
             journal.Clear();
 
             Gumps.SendAction(gumpID, direction);
@@ -287,6 +291,7 @@ namespace RazorEnhanced
                 if (gump) return MoveResult.ValidTry;
             }
 
+            Gumps.CloseGump(gumpID); // Just a safety measure
             return MoveResult.SomethingWentWrong;
         }
         // Calculate the next direction to try

@@ -59,6 +59,7 @@
     <Compile Include="Scripts\Items\ContainerInspector.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Scripts\Items\ItemsComparer.cs" />
     <Compile Include="Scripts\Items\MiningCarts_Stumps.cs" />
     <Compile Include="Scripts\Gathering\PlantsPicker.cs" />
     <Compile Include="Scripts\Libs\loot_container.cs" />
