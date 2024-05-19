@@ -8,6 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Forms;
 
 //#forcedebug
 //#import <stored_data.cs>
@@ -84,11 +85,6 @@ namespace RazorEnhanced
             var serverList = json_storedData.GetData<List<LootInfo>>("LootChest.LootList", StoredData.StoreType.Server);
             var charList = json_storedData.GetData<List<LootInfo>>("LootChest.LootList", StoredData.StoreType.Character);
 
-            if (serverList != null)
-            {
-                wantedLootList.AddRange(serverList);
-            }
-
             if (charList != null)
             {
                 wantedLootList.AddRange(charList);
@@ -96,41 +92,39 @@ namespace RazorEnhanced
 
             //wantedLootList.Clear(); // TODO: Remove this line when you have finished testing. only for debug
 
-            // If there is no loot list, add a default one
-            if (wantedLootList.Count <= 0)
+            if (serverList == null || serverList.Count <= 0)
             {
-                wantedLootList.Add(new LootInfo(0x0F0F) { Name = "Star Sapphire" });
-                wantedLootList.Add(new LootInfo(0x0F10) { Name = "Emerald" });
-                wantedLootList.Add(new LootInfo(0x0F11) { Name = "Sapphire" });
-                wantedLootList.Add(new LootInfo(0x0F13) { Name = "Ruby" });
-                wantedLootList.Add(new LootInfo(0x0F15) { Name = "Citrine" });
-                wantedLootList.Add(new LootInfo(0x0F16) { Name = "Amethyst" });
-                wantedLootList.Add(new LootInfo(0x0F18) { Name = "Tourmaline" });
-                wantedLootList.Add(new LootInfo(0x0F19) { Name = "Sapphire" });
-                wantedLootList.Add(new LootInfo(0x0F21) { Name = "Star Sapphire" });
-                wantedLootList.Add(new LootInfo(0x0F25) { Name = "Amber" });
-                wantedLootList.Add(new LootInfo(0x0F26) { Name = "Diamond" });
+                serverList = new List<LootInfo>
+                {
+                    new (0x0F0F) { Name = "Star Sapphire" },
+                    new (0x0F10) { Name = "Emerald" },
+                    new (0x0F11) { Name = "Sapphire" },
+                    new (0x0F13) { Name = "Ruby" },
+                    new (0x0F15) { Name = "Citrine" },
+                    new (0x0F16) { Name = "Amethyst" },
+                    new (0x0F18) { Name = "Tourmaline" },
+                    new (0x0F19) { Name = "Sapphire" },
+                    new (0x0F21) { Name = "Star Sapphire" },
+                    new (0x0F25) { Name = "Amber" },
+                    new (0x0F26) { Name = "Diamond" },
+                    new (0x0EF3) { Name = "Blank Scroll" },
+                    new (0x1F59) { Name = "Mark" },
+                    new (0x1F41) { Name = "Telekinesis" }
+                };
+                json_storedData.StoreData(serverList, "LootChest.LootList", StoredData.StoreType.Server);
+            }
+            wantedLootList.AddRange(serverList);
 
-                wantedLootList.Add(new LootInfo(0x0EF3) { Name = "Blank Scroll" });
-                wantedLootList.Add(new LootInfo(0x1F59) { Name = "Mark" });
-                wantedLootList.Add(new LootInfo(0x1F41) { Name = "Telekinesis" });
-
-                json_storedData.StoreData(wantedLootList, "LootChest.LootList", StoredData.StoreType.Server);
-
-                // Adding gold to the character specific list.
-                // This is just an example of how to add items to the character specific list.
-                var charSpecificList = new List<LootInfo>
+            if (charList == null || charList.Count <= 0)
+            {
+                charList = new List<LootInfo>
                 {
                     new () { Name = "Gold Coin" }, // Gold
-                    new () { Name = "Bracelet", Properties = new List<LootInfo.Property> { new LootInfo.Property("Lesser Artifact","")} } // Bracelet
+                    //new () { Name = "Bracelet", Properties = new List<LootInfo.Property> { new LootInfo.Property("Lesser Artifact","")} } // Bracelet
                 };
-
-                //charSpecificList.Add(new LootInfo() { Name = "Bracelet" });
-                //charSpecificList.Last().AddProperty("test", "prova");
-
-                json_storedData.StoreData(charSpecificList, "LootChest.LootList", StoredData.StoreType.Character);
-                wantedLootList.AddRange(charSpecificList);
+                json_storedData.StoreData(charList, "LootChest.LootList", StoredData.StoreType.Character);
             }
+            wantedLootList.AddRange(charList);
         }
 
         // Must be public so can be called from other scripts
