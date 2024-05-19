@@ -53,6 +53,17 @@ namespace RazorEnhanced
         public LootContainer()
         {
             lootBagSerial = json_storedData.GetData<int>("LootChest.LootBagSerial", StoredData.StoreType.Character);
+
+            if (lootBagSerial != 0)
+            {
+                Item lootBag = Items.FindBySerial(lootBagSerial);
+                if (lootBag == null || !lootBag.IsContainer)
+                {
+                    Player.HeadMessage(33, "Invalid loot bag");
+                    lootBagSerial = 0;
+                }
+            }
+
             if (lootBagSerial == 0)
             {
                 Player.HeadMessage(33, "Select a loot bag");
@@ -110,8 +121,8 @@ namespace RazorEnhanced
                 // This is just an example of how to add items to the character specific list.
                 var charSpecificList = new List<LootInfo>
                 {
-                    new LootInfo() { Name = "Gold Coin" }, // Gold
-                    new LootInfo() { Name = "Bracelet", Properties = new List<LootInfo.Property> { new LootInfo.Property("Lesser Artifact","")} } // Bracelet
+                    new () { Name = "Gold Coin" }, // Gold
+                    new () { Name = "Bracelet", Properties = new List<LootInfo.Property> { new LootInfo.Property("Lesser Artifact","")} } // Bracelet
                 };
 
                 //charSpecificList.Add(new LootInfo() { Name = "Bracelet" });
@@ -123,6 +134,7 @@ namespace RazorEnhanced
         }
 
         // Must be public so can be called from other scripts
+        // Loots the container and move the items to the loot bag
         public bool Loot(int chestSerial)
         {
             Player.HeadMessage(50, "Starting Looting");

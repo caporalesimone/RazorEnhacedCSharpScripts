@@ -14,7 +14,7 @@ namespace RazorEnhanced
         private const int LOCKPICK_TENTATIVES = 3;
         private const int REMOVE_TRAP_TENTATIVES = 3;
 
-        private readonly StoredData json_storedData = new StoredData();
+        private readonly StoredData json_storedData = new ();
 
         public LockpickChest()
         {
@@ -34,7 +34,7 @@ namespace RazorEnhanced
             }
 
             Item chest = Items.FindBySerial(chestSerial);
-            if (!chest.IsContainer)
+            if ((chest == null) || (!chest.IsContainer))
             {
                 Player.HeadMessage(33, "Target is not a container");
                 return;
@@ -69,7 +69,7 @@ namespace RazorEnhanced
 
             Misc.Pause(1000);
 
-            LootContainer loot = new LootContainer();
+            LootContainer loot = new();
             loot.Loot(chestSerial);
         }
 
