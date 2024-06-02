@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.XPath;
+using System.Threading;
 
 //#forcedebug
 
@@ -8,15 +8,31 @@ namespace RazorEnhanced
 {
     internal class PlantsPicker
     {
+        enum RecallType
+        {
+            NoRecall,
+            Magery,
+            SacredJourney
+        }
+
+        enum RuneBookType
+        {
+            UseRuneBook,
+            UseAtlas
+        }
+
+        private const RecallType RECALL_TYPE = RecallType.SacredJourney;
+        private const RuneBookType RECALL_BOOK_TYPE = RuneBookType.UseAtlas;
+
         private const int HOME_RUNE = 0;
-        private const int MAX_RUNE = 5;
-        private const int START_FROM_RUNE_NUMBER = 1;
+        //private const int MAX_RUNE = 0;
+        private const int START_FROM_RUNE_NUMBER = 1; // 0 is Home
         private const int FIND_RADIUS = 35;
 
-        private int SERIAL_RUNEBOOK = 0; // If 0 disable recall
-        private int SERIAL_CONTAINER = 0x417BE7A9;
+        private int SERIAL_RECALLBOOK = 0x415C17F9;
+        private int SERIAL_CONTAINER = 0x418B701F;
 
-        private List<int> PLANTS = new List<int>()
+        private List<int> PLANTS = new()
         { 
             0x0C51, 0x0C52, 0x0C53, 0x0C54, // Cotton
             0x1A99, 0x1A9A, 0x1A9B,         // Flax
@@ -29,7 +45,7 @@ namespace RazorEnhanced
          // 0x0C55, 0x0C56, 0x0C57, 0x0C58, // Wheat
          };
 
-        private List<int> RESOURCES = new List<int>()
+        private readonly List<int> RESOURCES = new()
         {
                     0x0DF9, // Bale of cotton
             0x1A9C, 0x1A9D, // Flax bundle
@@ -48,28 +64,27 @@ namespace RazorEnhanced
 
         public void Run ()
         {
-            int rune = START_FROM_RUNE_NUMBER; // Rune 0 is home
-            
+            int max_rune_cnt = CountRunesInBook();
+            int rune_cnt = START_FROM_RUNE_NUMBER;
 
             while(true)
             {
-                Misc.Pause(10);
-                Recall(rune);
+                Recall(rune_cnt);
 
                 bool harvestResult = HarvestTheField();
                 
                 if (!harvestResult) GoBackHome();
                 
-                if (rune++ >= MAX_RUNE)
+                if (++rune_cnt >= max_rune_cnt)
                 {
                     GoBackHome();
-                    rune = START_FROM_RUNE_NUMBER; // Restart from the begin
+                    rune_cnt = START_FROM_RUNE_NUMBER; // Restart from the begin
                 }
 
-                if (Player.Weight > Player.MaxWeight - 5)
+                if (Player.Weight > Player.MaxWeight - 10)
                 {
                     Player.HeadMessage(33, "Overloaded");
-                    if (SERIAL_RUNEBOOK != 0)
+                    if (RECALL_TYPE != RecallType.NoRecall)
                     {
                         GoBackHome();
                     }
@@ -137,9 +152,18 @@ namespace RazorEnhanced
         private void HarvestPlant(Item plant)
         {
             Items.Message(plant.Serial, 33, ">.<");
+
+            double dist = Misc.Distance(Player.Position.X, Player.Position.Y, plant.Position.X, plant.Position.Y);
+            if (dist > 1)
+            {
+                Player.HeadMessage(33, "Plant is too far");
+                Misc.Pause(100);
+                return;
+            }
+
             Items.UseItem(plant);
             Misc.Pause(700);
-            List<Item> harvest = FindItemOnGround(FIND_RADIUS, RESOURCES);
+            List<Item> harvest = FindItemOnGround(2, RESOURCES); // Sometimes happen that 2 plants are in the same tile
             foreach (Item harvestItem in harvest)
             {
                 Items.Move(harvestItem, Player.Backpack, -1);
@@ -159,27 +183,13 @@ namespace RazorEnhanced
                 MoveToPlant(plant);
                 HarvestPlant(plant);
 
-                if ((Player.Weight > Player.MaxWeight - 20) || (Player.Mana < 20)) return false;
+                if (Player.Weight > Player.MaxWeight - 10) return false;
 
                 // Search Again
                 groundPlants = FindItemOnGround(FIND_RADIUS, PLANTS);
             }
             Player.HeadMessage(25, "All plants harvested");
             return true;
-        }
-
-        private void Recall(int runePosition )
-        {
-            if (SERIAL_RUNEBOOK == 0) {
-                Misc.Pause(500);
-                return;
-            }
-            Items.UseItem(SERIAL_RUNEBOOK);
-            Gumps.WaitForGump(0, 20000);
-            uint gump = Gumps.CurrentGump();
-            Misc.Pause(50);
-            Gumps.SendAction(gump, 5 + runePosition * 6);
-            Misc.Pause(3500);
         }
 
         private void UnloadResources()
@@ -197,16 +207,18 @@ namespace RazorEnhanced
                 }
             }
             Misc.Pause(1000);
+            Gumps.CloseGump(Gumps.CurrentGump());
         }
 
         private void GoBackHome()
         {
-            if (SERIAL_RUNEBOOK == 0) {
+            if (RECALL_TYPE == RecallType.NoRecall) {
                 Misc.Pause(500);
                 return;
             }
-            
+
             Recall(HOME_RUNE);
+
             UnloadResources();
 
             while(Player.Mana < Player.ManaMax)
@@ -215,5 +227,122 @@ namespace RazorEnhanced
                 Misc.Pause(2000);
             }
         }
+
+        private void Recall(int runePosition)
+        {
+            while (Player.Mana < 20)
+            {
+                Player.HeadMessage(33, $"Waiting for al least 20 Mana pints: {Player.Mana}/{Player.ManaMax}");
+                Misc.Pause(2000);
+            }
+
+            if (RECALL_TYPE == RecallType.NoRecall || SERIAL_RECALLBOOK == 0)
+            {
+                Misc.Pause(500);
+                return;
+            }
+
+            if (RECALL_BOOK_TYPE == RuneBookType.UseRuneBook)
+            {
+                Items.UseItem(SERIAL_RECALLBOOK);
+                Gumps.WaitForGump(0, 20000);
+                uint gump = Gumps.CurrentGump();
+                Misc.Pause(50);
+                Gumps.SendAction(gump, 5 + runePosition * 6);
+            }
+            else if (RECALL_BOOK_TYPE == RuneBookType.UseAtlas)
+            {
+                Recall_Atlas(runePosition);
+            }
+        }
+
+        private void Recall_Atlas(int runePosition)
+        {
+            Items.UseItem(SERIAL_RECALLBOOK);
+            Gumps.WaitForGump(0, 20000);
+            uint gump = Gumps.CurrentGump();
+
+            int pageNum = 0;
+            for (int i = 0; i < runePosition / 16; i++)
+            {
+                Gumps.SendAction(gump, 1150); // Next Page
+                Gumps.WaitForGump(0, 20000);
+                gump = Gumps.CurrentGump();
+                pageNum++;
+            }
+
+            // Select the rune
+            Gumps.SendAction(gump, 100 + runePosition);
+            Gumps.WaitForGump(0, 20000);
+            gump = Gumps.CurrentGump();
+
+            Misc.Pause(1000);
+
+            List<string> RuneListInPage = Gumps.GetLineList(gump);
+            int runeIndexInPage = runePosition + (3 * pageNum) + 1; // First lise of the List contains the carhes number of the book "0 / 80"
+            string runeText = RuneListInPage[runeIndexInPage];
+            Player.HeadMessage(33, "Recalling to " + runeText);
+
+            if (RECALL_TYPE == RecallType.Magery)
+            {
+                Gumps.SendAction(gump, 4); // Recall
+            }
+            else if (RECALL_TYPE == RecallType.SacredJourney)
+            {
+                Gumps.SendAction(gump, 7); // Sacred Journey
+            }
+
+            Misc.Pause(5000);
+        }
+
+        private int CountRunesInBook()
+        {
+            if (RECALL_TYPE == RecallType.NoRecall) return 0;
+            if (SERIAL_RECALLBOOK == 0) return 0;
+
+            Items.UseItem(SERIAL_RECALLBOOK);
+
+            int runesCount = 0;
+
+            // I don't know if there are only 3 pages everywhere. So I consider 10 pages and then exit if I don't find the button to go to the next page.
+            for (int i = 0; i < 10; i++)  
+            {
+                Gumps.WaitForGump(0, 20000);
+                uint gump = Gumps.CurrentGump();
+                string gumpContent = Gumps.GetGumpRawData(gump);
+
+                gumpContent = gumpContent.ToLower();
+                gumpContent = gumpContent.Replace("@move up@", "");
+                gumpContent = gumpContent.Replace("@move down@", "");
+                gumpContent = gumpContent.Replace("@empty@", "");
+
+                if (RECALL_BOOK_TYPE == RuneBookType.UseAtlas)
+                {
+                    // Tooltips are between @ so it count twice. Eg: { tooltip 1042971 @Britain 1 Trammel@ }
+                    runesCount += gumpContent.Count(c => c == '@') / 2; 
+                }
+                else if (RECALL_BOOK_TYPE == RuneBookType.UseRuneBook)
+                {
+                    // Tooltips are between @ so it count twice. Eg: { tooltip 1042971 @Britain 1 Trammel@ }
+                    // In runebook there tooltips are repeated twice 
+                    runesCount += gumpContent.Count(c => c == '@') / 4; 
+                }
+
+                if (gumpContent.Contains("{ button 374 3 2206 2206 1 0 1150 }"))
+                {
+                    Gumps.SendAction(gump, 1150); // Next poage
+                    Misc.Pause(100);
+                }
+                else 
+                {
+                    // Next page button missing, so this is the last page
+                    Gumps.CloseGump(gump);
+                    Misc.Pause(100);
+                    break;
+                }
+            }
+            return runesCount;
+        }
+
     }
 }
