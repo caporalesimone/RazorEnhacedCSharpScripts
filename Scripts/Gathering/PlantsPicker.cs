@@ -21,16 +21,22 @@ namespace RazorEnhanced
             UseAtlas
         }
 
-        private const RecallType RECALL_TYPE = RecallType.SacredJourney;
-        private const RuneBookType RECALL_BOOK_TYPE = RuneBookType.UseAtlas;
+        enum GumpReturn
+        {
+            Close,
+            Error,
+            OK
+        }
+
+        private RecallType RECALL_TYPE = RecallType.SacredJourney;
+        private RuneBookType RECALL_BOOK_TYPE = RuneBookType.UseAtlas;
 
         private const int HOME_RUNE = 0;
-        //private const int MAX_RUNE = 0;
         private const int START_FROM_RUNE_NUMBER = 1; // 0 is Home
         private const int FIND_RADIUS = 35;
 
-        private int SERIAL_RECALLBOOK = 0x415C17F9;
-        private int SERIAL_CONTAINER = 0x418B701F;
+        private int SERIAL_RECALLBOOK = 0;
+        private int SERIAL_CONTAINER = 0;
 
         private List<int> PLANTS = new()
         { 
@@ -64,10 +70,17 @@ namespace RazorEnhanced
 
         public void Run ()
         {
+            SERIAL_RECALLBOOK = (int)Misc.ReadSharedValue("PlantsPicker.RuneBookSerial");
+            SERIAL_CONTAINER = (int)Misc.ReadSharedValue("PlantsPicker.ContainerSerial");
+
+            GumpReturn gumpReturn = DisplayMenu();
+            if (gumpReturn == GumpReturn.Error) return;
+            if (gumpReturn == GumpReturn.Close) return;
+            
             int max_rune_cnt = CountRunesInBook();
             int rune_cnt = START_FROM_RUNE_NUMBER;
 
-            while(true)
+            while (true)
             {
                 Recall(rune_cnt);
 
@@ -93,8 +106,13 @@ namespace RazorEnhanced
                         break;
                     }
                 }
-            }
 
+                if (RECALL_TYPE == RecallType.NoRecall)
+                {
+                    break;
+                }
+            }
+            Player.HeadMessage(33, "End of the run");
         }
 
         private List<Item> FindItemOnGround(int range, List<int> graphics)
@@ -194,6 +212,8 @@ namespace RazorEnhanced
 
         private void UnloadResources()
         {
+            if (SERIAL_CONTAINER == 0) return;
+
             Player.HeadMessage(33, "Moving all the harvest");
             foreach (var resource in RESOURCES)
             {
@@ -272,6 +292,7 @@ namespace RazorEnhanced
             }
 
             // Select the rune
+            Gumps.ResetGump();
             Gumps.SendAction(gump, 100 + runePosition);
             Gumps.WaitForGump(0, 20000);
             gump = Gumps.CurrentGump();
@@ -344,5 +365,167 @@ namespace RazorEnhanced
             return runesCount;
         }
 
+        private GumpReturn DisplayMenu()
+        {
+            uint gumpID = 123456;
+
+            var gump = Gumps.CreateGump(true, true, true, true);
+            gump.gumpId = gumpID;
+            gump.serial = (uint)Player.Serial;
+
+            // Help from https://docs.polserver.com/pol100/guides.php?guidefile=gumpcmdlist#button
+
+            Gumps.AddPage(ref gump, 0);
+            Gumps.AddBackground(ref gump, 0, 0, 250, 330, 5054);
+            Gumps.AddAlphaRegion(ref gump, 10, 10, 250-20, 330-20);
+
+            Gumps.AddImageTiled(ref gump, 10, 10, 250-20, 22, 2624); // Black Backgroun of the text
+            Gumps.AddHtml(ref gump, 10, 12, 220, 20, "<CENTER><BASEFONT COLOR=\"YELLOW\">= PLANTS PICKER =</BASEFONT></CENTER>", false, false);
+
+            // Single Harverst or Harverst and Recall
+            gump.gumpDefinition += "{ Group {0} }";
+            Gumps.AddRadio(ref gump, 20, 40, 5836, 5828, false, 1);
+            Gumps.AddHtml(ref gump, 55, 45, 150, 25, "<BASEFONT COLOR=#DCDEAB>Harves only one field</BASEFONT>", false, false);
+
+            Gumps.AddRadio(ref gump, 20, 75, 5836, 5828, true, 2);
+            Gumps.AddHtml(ref gump, 55, 80, 150, 25, "<BASEFONT COLOR=#DCDEAB>Harvest and recall</BASEFONT>", false, false);
+            gump.gumpDefinition += "{ EndGroup {0} }";
+
+            // Book Type, ID and Container ID
+
+            string bookName = (SERIAL_RECALLBOOK == 0 ? "None" : Items.FindBySerial(SERIAL_RECALLBOOK).Name);
+            bookName = "<BASEFONT COLOR=#FFFFFF>" + bookName + "</BASEFONT>";
+            string bookID = "<BASEFONT COLOR=#FFFFFF>" + "0x" + SERIAL_RECALLBOOK.ToString("X8") + "</BASEFONT>"; 
+
+            Gumps.AddHtml(ref gump, 20, 120, 200, 25, $"<BASEFONT COLOR=\"YELLOW\">Book Name:</BASEFONT> {bookName}", false, false);
+            Gumps.AddHtml(ref gump, 20, 140, 200, 25, $"<BASEFONT COLOR=\"YELLOW\">Book ID:</BASEFONT> {bookID}", false, false);
+            Gumps.AddButton(ref gump, 200, 138, 4029, 4031, 10, 1, 0); // ID 10 - ID Book
+            Gumps.AddTooltip(ref gump, "Select a Runebook or a Runic Atlas");
+
+            
+            string chestName = (SERIAL_CONTAINER == 0 ? "None" : Items.FindBySerial(SERIAL_CONTAINER).Name);
+            chestName = "<BASEFONT COLOR=#FFFFFF>" + chestName + "</BASEFONT>";
+            string chestID = "<BASEFONT COLOR=#FFFFFF>" + "0x" + SERIAL_CONTAINER.ToString("X8") + "</BASEFONT>";
+
+            Gumps.AddHtml(ref gump, 20, 160, 210, 25, $"<BASEFONT COLOR=\"YELLOW\">Chest Name:</BASEFONT> {chestName}", false, false);
+            Gumps.AddHtml(ref gump, 20, 180, 210, 25, $"<BASEFONT COLOR=\"YELLOW\">Chest ID:</BASEFONT> {chestID}", false, false);
+            
+            Gumps.AddButton(ref gump, 200, 178, 4029, 4031, 11, 1, 0); // ID 11 - ID Container
+            Gumps.AddTooltip(ref gump, "Select a container where will drop items");
+
+            // Recall Type: Magery or Sacred Journey
+            gump.gumpDefinition += "{ Group {1} }";
+            Gumps.AddRadio(ref gump, 20, 210, 5836, 5828, false, 1);
+            Gumps.AddHtml(ref gump, 55, 210+5, 150, 25, "<BASEFONT COLOR=#DCDEAB>Use Magery</BASEFONT>", false, false);
+
+            Gumps.AddRadio(ref gump, 20, 210+35, 5836, 5828, true, 2);
+            Gumps.AddHtml(ref gump, 55, 210+35+5, 150, 25, "<BASEFONT COLOR=#DCDEAB>Use Sacred Journey</BASEFONT>", false, false);
+            gump.gumpDefinition += "{ EndGroup {1} }";
+
+            // Close and Start buttons
+            Gumps.AddHtml(ref gump, 55, 290, 150, 25, "<BASEFONT COLOR=#FFFFFF>Close</BASEFONT>", false, false);
+            Gumps.AddButton(ref gump, 20, 290, 30535, 30533, 20, 1, 0); // ID 20 - Start
+            Gumps.AddTooltip(ref gump, "Close menu");
+
+            Gumps.AddHtml(ref gump, 160, 290, 150, 25, "<BASEFONT COLOR=#FFFFFF>Start</BASEFONT>", false, false);
+            Gumps.AddButton(ref gump, 200, 290, 30534, 30533, 21, 1, 0); // ID 21 - Close
+            Gumps.AddTooltip(ref gump, "Start harversting");
+
+            Gumps.SendGump(gump.gumpId, gump.serial, 0, 0, gump.gumpDefinition, gump.gumpStrings);
+
+            bool bret = Gumps.WaitForGump(gumpID, 15000);
+            if (!bret) return GumpReturn.Error; // Exit
+
+            int button = -1;
+
+            Target target = new();
+
+            while (button == -1)
+            {
+                var gumpData = Gumps.GetGumpData(gumpID);
+                if (gumpData.gumpId == gumpID)
+                {
+                    button = gumpData.buttonid;
+
+                    if (button == 0) return GumpReturn.Close; // Exit
+
+                    // Select Book
+                    if (button == 10)
+                    {
+                        Misc.SendMessage("Select a Runebook or a Runic Atlas");
+                        Item new_book = Items.FindBySerial(target.PromptTarget());
+                        if ((new_book.ItemID == 0x22C5) || (new_book.ItemID == 0x9C16)) // Runebook or Atlas
+                        {
+                            SERIAL_RECALLBOOK = new_book.Serial;
+                            Misc.SetSharedValue("PlantsPicker.RuneBookSerial", SERIAL_RECALLBOOK);
+                        }
+                        else
+                        {
+                            Player.HeadMessage(33, "Invalid target! Select a Runebook or a Runic Atlas");
+                        }
+                        Gumps.CloseGump(gumpID);
+                        DisplayMenu();
+                    }
+                    // Select Container
+                    else if (button == 11)
+                    {
+                        Misc.SendMessage("Select a container");
+                        Item new_container = Items.FindBySerial(target.PromptTarget());
+                        if (new_container.IsContainer)
+                        {
+                            SERIAL_CONTAINER = new_container.Serial;
+                            Misc.SetSharedValue("PlantsPicker.ContainerSerial", SERIAL_CONTAINER);
+                        }
+                        else
+                        {
+                            Player.HeadMessage(33, "Invalid target! Select a valid container");
+                        }
+
+                        Gumps.CloseGump(gumpID);
+                        DisplayMenu();
+                    }
+                    // Close Button
+                    else if (button == 20)
+                    {
+                        Gumps.CloseGump(gumpID);
+                        return GumpReturn.Close;
+                    }
+                    // Start Button
+                    else if (button == 21)
+                    {
+                        int harvest_type = gumpData.switches[0];
+                        int recall_type = gumpData.switches[1];
+
+                        if (harvest_type == 1)
+                        {
+                            RECALL_TYPE = RecallType.NoRecall;
+                        }
+                        else
+                        {
+                            RECALL_TYPE = recall_type == 1 ? RecallType.Magery : RecallType.SacredJourney;
+                        }
+                        Gumps.CloseGump(gumpID);
+                        
+
+                        if (RECALL_TYPE != RecallType.NoRecall && SERIAL_RECALLBOOK == 0)
+                        {
+                            Player.HeadMessage(33, "Select a Runebook or a Runic Atlas before start using recall");
+                            DisplayMenu();
+                        }
+
+                        if (RECALL_TYPE != RecallType.NoRecall && SERIAL_CONTAINER == 0)
+                        {
+                            Player.HeadMessage(33, "Select a container before start  harvesting using recall");
+                            DisplayMenu();
+                        }
+
+                        return GumpReturn.OK;
+                    }
+                }
+                Misc.Pause(100);
+            }
+            
+            return GumpReturn.Close;
+        }
     }
 }
