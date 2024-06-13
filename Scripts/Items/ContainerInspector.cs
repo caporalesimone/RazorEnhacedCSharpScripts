@@ -4,7 +4,7 @@
 // Copyright Caporale Simone - 2024
 
 //#forcedebug 
-//#assembly "C:\UltimaOnline\RazorEnhanced\Newtonsoft.Json.dll"
+//#assembly <Newtonsoft.Json.dll>
 
 /*
 Troubleshooting for the error: "Error (CS0006) at line 0: Metadata file 'Newtonsoft.Json.dll' could not be found"
