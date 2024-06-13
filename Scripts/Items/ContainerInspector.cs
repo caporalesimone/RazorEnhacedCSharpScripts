@@ -325,7 +325,7 @@ namespace RazorEnhanced
                 ReshowDelay = 500,
                 ShowAlways = true
             };
-            toolTip_checkRecursiveScan.SetToolTip(this.cmdShowHiddenColumns, "To hide a column double click it");
+            toolTip_checkRecursiveScan.SetToolTip(this.cmdShowHiddenColumns, "To hide a column double click the header");
 
             // Initialize DataGrid
             ConfigureDataGrid();
