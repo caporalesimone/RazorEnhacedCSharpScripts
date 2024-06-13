@@ -385,7 +385,7 @@ namespace RazorEnhanced
             // Single Harverst or Harverst and Recall
             gump.gumpDefinition += "{ Group {0} }";
             Gumps.AddRadio(ref gump, 20, 40, 5836, 5828, false, 1);
-            Gumps.AddHtml(ref gump, 55, 45, 150, 25, "<BASEFONT COLOR=#DCDEAB>Harves only one field</BASEFONT>", false, false);
+            Gumps.AddHtml(ref gump, 55, 45, 150, 25, "<BASEFONT COLOR=#DCDEAB>Harvest only one field</BASEFONT>", false, false);
 
             Gumps.AddRadio(ref gump, 20, 75, 5836, 5828, true, 2);
             Gumps.AddHtml(ref gump, 55, 80, 150, 25, "<BASEFONT COLOR=#DCDEAB>Harvest and recall</BASEFONT>", false, false);
