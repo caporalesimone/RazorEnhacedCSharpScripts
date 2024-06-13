@@ -322,6 +322,7 @@ namespace RazorEnhanced
             dataGrid.BackgroundColor = System.Drawing.Color.DarkGray;
             dataGrid.DefaultCellStyle.ForeColor = System.Drawing.Color.White;
             dataGrid.DefaultCellStyle.BackColor = System.Drawing.Color.Black;
+            dataGrid.AllowUserToOrderColumns = true;
         }
         #endregion
 
