@@ -68,6 +68,7 @@ namespace RazorEnhanced
         #region Global Variables
         private List<UOObject> scannedItemsList = new();
         private List<UOObject> scannedItemsList_CopyForFiltering = new();
+        private Button cmdShowHiddenColumns;
         private int specialColumnsCount;
         #endregion
 
@@ -101,6 +102,7 @@ namespace RazorEnhanced
             this.Txt_SelectedItmProp = new System.Windows.Forms.RichTextBox();
             this.cmdExport = new System.Windows.Forms.Button();
             this.cmdImport = new System.Windows.Forms.Button();
+            this.cmdShowHiddenColumns = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSelectedObj)).BeginInit();
             this.statusStrip.SuspendLayout();
@@ -131,6 +133,7 @@ namespace RazorEnhanced
             this.dataGrid.Size = new System.Drawing.Size(1072, 665);
             this.dataGrid.TabIndex = 1;
             this.dataGrid.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.DataGrid_CellFormatting);
+            this.dataGrid.ColumnHeaderMouseDoubleClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DataGrid_ColumnHeaderMouseDoubleClick);
             this.dataGrid.SelectionChanged += new System.EventHandler(this.DataGrid_SelectionChanged);
             // 
             // cmdGetSelected
@@ -264,9 +267,20 @@ namespace RazorEnhanced
             this.cmdImport.UseVisualStyleBackColor = true;
             this.cmdImport.Click += new System.EventHandler(this.CmdImport_Click);
             // 
+            // cmdShowHiddenColumns
+            // 
+            this.cmdShowHiddenColumns.Location = new System.Drawing.Point(807, 11);
+            this.cmdShowHiddenColumns.Name = "cmdShowHiddenColumns";
+            this.cmdShowHiddenColumns.Size = new System.Drawing.Size(187, 26);
+            this.cmdShowHiddenColumns.TabIndex = 15;
+            this.cmdShowHiddenColumns.Text = "Show Hidden Columns";
+            this.cmdShowHiddenColumns.UseVisualStyleBackColor = true;
+            this.cmdShowHiddenColumns.Click += new System.EventHandler(this.CmdShowHiddenColumns_Click);
+            // 
             // ContainerInspector
             // 
             this.ClientSize = new System.Drawing.Size(1258, 744);
+            this.Controls.Add(this.cmdShowHiddenColumns);
             this.Controls.Add(this.cmdImport);
             this.Controls.Add(this.cmdExport);
             this.Controls.Add(this.Txt_SelectedItmProp);
@@ -297,12 +311,21 @@ namespace RazorEnhanced
             // Tooltips
             ToolTip toolTip_checkRecursiveScan = new()
             {
-                AutoPopDelay = 5000,
-                InitialDelay = 1000,
+                AutoPopDelay = 2000,
+                InitialDelay = 50,
                 ReshowDelay = 500,
                 ShowAlways = true
             };
             toolTip_checkRecursiveScan.SetToolTip(this.checkRecursiveScan, "Search inside all containers");
+            
+            ToolTip toolTipUnHideButton = new()
+            {
+                AutoPopDelay = 2000,
+                InitialDelay = 50,
+                ReshowDelay = 500,
+                ShowAlways = true
+            };
+            toolTip_checkRecursiveScan.SetToolTip(this.cmdShowHiddenColumns, "To hide a column double click it");
 
             // Initialize DataGrid
             ConfigureDataGrid();
@@ -441,6 +464,17 @@ namespace RazorEnhanced
                 MessageBox.Show("File not found: " + fileName.FullName, "File Not Found", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+        private void CmdShowHiddenColumns_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewColumn column in dataGrid.Columns)
+            {
+                if (!column.Visible)
+                {
+                    column.Visible = true;
+                }
+            }
+        }
+
         #endregion
 
         #region Other Events
@@ -501,6 +535,10 @@ namespace RazorEnhanced
                     e.CellStyle.Font = defaultFontBold;
                 }
             }
+        }
+        private void DataGrid_ColumnHeaderMouseDoubleClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            dataGrid.Columns[e.ColumnIndex].Visible = false;
         }
         private void BulkItemsInspector_Resize(object sender, EventArgs e)
         {
@@ -867,5 +905,9 @@ namespace RazorEnhanced
             }
         }
         #endregion
+
+
+
+
     }
 }
