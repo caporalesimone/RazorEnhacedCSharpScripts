@@ -85,31 +85,22 @@ namespace RazorEnhanced
                 Recall(rune_cnt);
 
                 bool harvestResult = HarvestTheField();
-                
-                if (!harvestResult) GoBackHome();
-                
-                if (++rune_cnt >= max_rune_cnt)
+
+                if (!harvestResult)
                 {
                     GoBackHome();
-                    rune_cnt = START_FROM_RUNE_NUMBER; // Restart from the begin
-                }
-
-                if (Player.Weight > Player.MaxWeight - 10)
-                {
-                    Player.HeadMessage(33, "Overloaded");
-                    if (RECALL_TYPE != RecallType.NoRecall)
-                    {
-                        GoBackHome();
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    continue;
                 }
 
                 if (RECALL_TYPE == RecallType.NoRecall)
                 {
                     break;
+                }
+
+                if (++rune_cnt >= max_rune_cnt)
+                {
+                    GoBackHome();
+                    rune_cnt = START_FROM_RUNE_NUMBER; // Restart from the begin
                 }
             }
             Player.HeadMessage(33, "End of the run");
@@ -292,9 +283,9 @@ namespace RazorEnhanced
             }
 
             // Select the rune
-            Gumps.ResetGump();
+            // Gumps.ResetGump();
             Gumps.SendAction(gump, 100 + runePosition);
-            Gumps.WaitForGump(0, 20000);
+            Gumps.WaitForGump(0, 10000);
             gump = Gumps.CurrentGump();
 
             Misc.Pause(1000);
