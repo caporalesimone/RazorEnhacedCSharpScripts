@@ -23,6 +23,10 @@ Troubleshooting for the error: "Error (CS0006) at line 0: Metadata file 'Newtons
     Version 1.2:
         - Now, when the filter is applied, only the properties actually available are shown and not all of them
         - Fixed a bug on the filter button. Now the filter should work correctly.
+    Version 1.3:
+        - Now scanning a new container will not clear the table but items will be added to the existing list
+        - Added a button to clear the table
+        - If an item is too far (more than 2 tiles), a message will be shown and the root container will say "I'm the container"
 */
 
 using Newtonsoft.Json;
@@ -41,7 +45,7 @@ namespace RazorEnhanced
 {
     class ContainerInspector : Form
     {
-        private const string version = "1.2";
+        private const string version = "1.3";
 
         #region User Interface
         private readonly System.Drawing.Font defaultFontRegular = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -69,6 +73,7 @@ namespace RazorEnhanced
         private List<UOObject> scannedItemsList = new();
         private List<UOObject> scannedItemsList_CopyForFiltering = new();
         private Button cmdShowHiddenColumns;
+        private Button cmdClearTable;
         private int specialColumnsCount;
         #endregion
 
@@ -103,6 +108,7 @@ namespace RazorEnhanced
             this.cmdExport = new System.Windows.Forms.Button();
             this.cmdImport = new System.Windows.Forms.Button();
             this.cmdShowHiddenColumns = new System.Windows.Forms.Button();
+            this.cmdClearTable = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSelectedObj)).BeginInit();
             this.statusStrip.SuspendLayout();
@@ -162,7 +168,7 @@ namespace RazorEnhanced
             this.checkRecursiveScan.AutoSize = true;
             this.checkRecursiveScan.Checked = true;
             this.checkRecursiveScan.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkRecursiveScan.Location = new System.Drawing.Point(279, 13);
+            this.checkRecursiveScan.Location = new System.Drawing.Point(412, 13);
             this.checkRecursiveScan.Name = "checkRecursiveScan";
             this.checkRecursiveScan.Size = new System.Drawing.Size(146, 24);
             this.checkRecursiveScan.TabIndex = 5;
@@ -277,9 +283,20 @@ namespace RazorEnhanced
             this.cmdShowHiddenColumns.UseVisualStyleBackColor = true;
             this.cmdShowHiddenColumns.Click += new System.EventHandler(this.CmdShowHiddenColumns_Click);
             // 
+            // cmdClearTable
+            // 
+            this.cmdClearTable.Location = new System.Drawing.Point(279, 11);
+            this.cmdClearTable.Name = "cmdClearTable";
+            this.cmdClearTable.Size = new System.Drawing.Size(120, 26);
+            this.cmdClearTable.TabIndex = 16;
+            this.cmdClearTable.Text = "Clear Table";
+            this.cmdClearTable.UseVisualStyleBackColor = true;
+            this.cmdClearTable.Click += new System.EventHandler(this.CmdClearTable_Click);
+            // 
             // ContainerInspector
             // 
             this.ClientSize = new System.Drawing.Size(1258, 744);
+            this.Controls.Add(this.cmdClearTable);
             this.Controls.Add(this.cmdShowHiddenColumns);
             this.Controls.Add(this.cmdImport);
             this.Controls.Add(this.cmdExport);
@@ -366,8 +383,18 @@ namespace RazorEnhanced
             if (dataGrid.SelectedRows.Count == 0) return;
 
             var row = dataGrid.SelectedRows;
-            string serial = row[0].Cells["Serial"].Value.ToString();
-            Items.Move(Convert.ToInt32(serial, 16), Player.Backpack.Serial, 1);
+            int serial = Convert.ToInt32(row[0].Cells["Serial"].Value.ToString(), 16);
+            Item item = Items.FindBySerial(serial);
+
+            var distance = Player.DistanceTo(item);
+            if (distance > 2)
+            {
+                Player.HeadMessage(33, "Item is too far away");
+                Items.Message(item.RootContainer, 33, "I'm the container");
+                return;
+            }
+
+            Items.Move(serial, Player.Backpack.Serial, 1);
             dataGrid.Rows.Remove(row[0]);
         }
         private void CmdFilter_Click(object sender, EventArgs e)
@@ -473,6 +500,12 @@ namespace RazorEnhanced
                     column.Visible = true;
                 }
             }
+        }
+        private void CmdClearTable_Click(object sender, EventArgs e)
+        {
+            scannedItemsList.Clear();
+            UpdateAllUI();
+            originalTableWithoutFilters = (dataGrid.DataSource as DataTable).Copy();
         }
 
         #endregion
@@ -677,7 +710,7 @@ namespace RazorEnhanced
         }
         private void TargetContainerAndUpdateObjectsList(bool recursiveScan)
         {
-            scannedItemsList.Clear();
+            //scannedItemsList.Clear();
             Item container = Items.FindBySerial(new Target().PromptTarget("Select a container"));
 
             //Removed the container check because jewelry boxes are not considered containers
@@ -904,10 +937,9 @@ namespace RazorEnhanced
                 return null;
             }
         }
+
+
+
         #endregion
-
-
-
-
     }
 }

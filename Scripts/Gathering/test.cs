@@ -1,3 +1,4 @@
+using Assistant;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -12,7 +13,32 @@ namespace RazorEnhanced
         {
         }
 
-        public void Run ()
+        public void Run()
+        {
+            /*
+            Target tgt = new Target();
+            var item = tgt.PromptTarget();
+            Items.UseItem(item);
+            Gumps.WaitForGump(0x1bcc2101, 20000);
+            uint gump = Gumps.CurrentGump();
+            string gumpContent = Gumps.GetGumpRawData(0x1bcc2101);
+            var gumpLines1 = Gumps.GetGumpRawText(0x1bcc2101);
+            */
+
+            
+            Items.WaitForProps(0x4144D37C, 2000);
+            
+            //Items.WaitForProps(0x408DD7C7, 2000);
+            //var c = Items.GetPropStringList(0x408DD7C7);
+
+
+            var b = 0;
+
+
+
+        }
+
+        public void Run1 ()
         {
             int same = 0;
             int different = 0;

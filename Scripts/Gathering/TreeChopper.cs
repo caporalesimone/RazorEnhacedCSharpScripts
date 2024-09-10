@@ -23,14 +23,16 @@ namespace RazorEnhanced
 
         private List<Tree> ignore_list;
 
-        private const bool DROP_COMMON_LOGS = true;
+        private const bool DROP_COMMON_LOGS = false; // Drop on ground commons logs
         private const int LOGS_ID = 0x1BDD;
 
+        private const int PURGE_AFTER_MINS = 20; // Remove tree from the list after N minutes
+        
         private const int MAX_WEIGHT_RANGE = 25;
-        private const int MAX_WIGHT_FOR_RESTART_WORK = 255; // If weight is over this value, the script will pause
+        private const int MAX_WIGHT_FOR_RESTART_WORK = 300; // If weight is over this value, the script will pause
 
         private const int FIND_RADIUS = 10;
-        private readonly List<int> HATCHET_IDs = new List<int> { 0x0F49, 0x1443 };
+        private readonly List<int> HATCHET_IDs = new List<int> { 0x0F49, 0x1443, 0x48B2 }; // 0x48B2 Gargoyle
         private readonly List<string> INVALID_TREE_NAMES = new List<string> { "o'hii tree" };
 
         private readonly StoredData json_storedData = new StoredData();
@@ -82,7 +84,7 @@ namespace RazorEnhanced
 
         private void PurgeIgnoreList()
         {
-            ignore_list.RemoveAll(item => item.LastChop < DateTime.Now.AddMinutes(-15));
+            ignore_list.RemoveAll(item => item.LastChop < DateTime.Now.AddMinutes(-PURGE_AFTER_MINS));
         }
 
         private bool CheckPlayerOverloaded()

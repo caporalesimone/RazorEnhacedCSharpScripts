@@ -202,8 +202,8 @@ namespace SharpRE.Scripts
             { "Bless", 1700 },
             { "Greater Heal", 1600 },
             { "Magic Reflection", 1800 },
-            { "Invisibility", 2100 },
-            { "Mana Vampire", 2300 },
+            { "Invisibility", 4000 },
+            { "Mana Vampire", 3000 },
             { "Earthquake", 2600 }
         };
 
@@ -319,6 +319,7 @@ namespace SharpRE.Scripts
                             spellsTiming.TryGetValue(spell, out int delay);
                             Target.WaitForTarget(delay);
                             Target.Self();
+                            Misc.Pause(delay);
                         }
                         else if (SkillValue >= 55 && SkillValue < 65)
                         {
@@ -327,6 +328,7 @@ namespace SharpRE.Scripts
                             Spells.Cast(spell);
                             spellsTiming.TryGetValue(spell, out int delay);
                             Target.WaitForTarget(delay);
+                            Misc.Pause(delay);
                         }
                         else if (SkillValue >= 65 && SkillValue < 75)
                         {
