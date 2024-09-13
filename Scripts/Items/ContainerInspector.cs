@@ -19,16 +19,21 @@ Troubleshooting for the error: "Error (CS0006) at line 0: Metadata file 'Newtons
     Version 1.0: 
         - Initial release (Tnx to @Denzen)
     Version 1.1:
-        - Removed the container check because jewelry boxes are not considered containers. (Tnx to @BigDa)
+        - Removed the container check because jewelry boxes are not considered containers (Valid for UoAlive server). (Tnx to @BigDa)
     Version 1.2:
         - Now, when the filter is applied, only the properties actually available are shown and not all of them
         - Fixed a bug on the filter button. Now the filter should work correctly.
     Version 1.3:
+        - Added a button to export the table to a JSON file.
+        - Added a button to import the table from a JSON file.
         - Now scanning a new container will not clear the table but items will be added to the existing list
         - Added a button to clear the table
+        - Added a button to show hidden columns
         - If an item is too far (more than 2 tiles), a message will be shown and the root container will say "I'm the container"
     Version 1.4:
-        - Changed the exported JSON structure to include columns visibility. This allow to store the table layout in the exported file
+        - Changed the exported JSON structure to include columns visibility.
+    Version 1.5:
+        - Changed the exported JSON structure to include columns order.
 */
 
 using Newtonsoft.Json;
@@ -47,7 +52,7 @@ namespace RazorEnhanced
 {
     class ContainerInspector : Form
     {
-        private const string version = "1.4";
+        private const string version = "1.5";
 
         #region User Interface
         private readonly System.Drawing.Font defaultFontRegular = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -82,7 +87,8 @@ namespace RazorEnhanced
         #region ExportedSturctures
         private class ColumnInfo
         {
-            public int ColumnIndex { get; set; }
+            public byte ColumnIndex { get; set; }
+            public byte DisplayIndex { get; set; }
             public string ColumnName { get; set; }
             public bool IsVisible { get; set; }
         }
@@ -485,7 +491,8 @@ namespace RazorEnhanced
             {
                 columnsInfo.Add(new ColumnInfo
                 {
-                    ColumnIndex = column.Index,
+                    ColumnIndex = (byte)column.Index,
+                    DisplayIndex = (byte)column.DisplayIndex,
                     ColumnName = column.Name,
                     IsVisible = column.Visible
                 });
@@ -528,7 +535,11 @@ namespace RazorEnhanced
                 foreach (var columnInfo in deserializedData.ColumnsInfo)
                 {
                     dataGrid.Columns[columnInfo.ColumnIndex].Visible = columnInfo.IsVisible;
+                    dataGrid.Columns[columnInfo.ColumnIndex].DisplayIndex = columnInfo.DisplayIndex;
                 }
+
+
+
 
                 MessageBox.Show("JSON File Imported", "File Imported", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
