@@ -27,6 +27,8 @@ Troubleshooting for the error: "Error (CS0006) at line 0: Metadata file 'Newtons
         - Now scanning a new container will not clear the table but items will be added to the existing list
         - Added a button to clear the table
         - If an item is too far (more than 2 tiles), a message will be shown and the root container will say "I'm the container"
+    Version 1.4:
+        - Changed the exported JSON structure to include columns visibility. This allow to store the table layout in the exported file
 */
 
 using Newtonsoft.Json;
@@ -45,7 +47,7 @@ namespace RazorEnhanced
 {
     class ContainerInspector : Form
     {
-        private const string version = "1.3";
+        private const string version = "1.4";
 
         #region User Interface
         private readonly System.Drawing.Font defaultFontRegular = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -75,6 +77,21 @@ namespace RazorEnhanced
         private Button cmdShowHiddenColumns;
         private Button cmdClearTable;
         private int specialColumnsCount;
+        #endregion
+
+        #region ExportedSturctures
+        private class ColumnInfo
+        {
+            public int ColumnIndex { get; set; }
+            public string ColumnName { get; set; }
+            public bool IsVisible { get; set; }
+        }
+
+        private class ExportedData
+        {
+            public List<ColumnInfo> ColumnsInfo { get; set; }
+            public List<UOObject> ItemsTable { get; set; }
+        }
         #endregion
 
         #region Constructor, Run and Initializations
@@ -463,9 +480,29 @@ namespace RazorEnhanced
             string file = FileInputBox.Show("Export table into a file", "Insert filename that will be stored in DATA\nfolder of Razor Enhanced.\n", "ContainerInspector.json", ".json", this);
             if (string.IsNullOrEmpty(file)) return;
 
+            var columnsInfo = new List<ColumnInfo>();
+            foreach (DataGridViewColumn column in dataGrid.Columns)
+            {
+                columnsInfo.Add(new ColumnInfo
+                {
+                    ColumnIndex = column.Index,
+                    ColumnName = column.Name,
+                    IsVisible = column.Visible
+                });
+            }
+
+            var exportedData = new ExportedData
+            {
+                ColumnsInfo = columnsInfo,
+                ItemsTable = scannedItemsList
+            };
+
             string _data_folder = Path.GetFullPath(Path.Combine(Assistant.Engine.RootPath, "Data"));
-            FileInfo fileName = new FileInfo(Path.Combine(_data_folder, file));
-            string json = JsonConvert.SerializeObject(scannedItemsList, Formatting.Indented);
+            FileInfo fileName = new(Path.Combine(_data_folder, file));
+
+            //string json = JsonConvert.SerializeObject(scannedItemsList, Formatting.Indented);
+            string json = JsonConvert.SerializeObject(exportedData, Formatting.Indented);
+
             File.WriteAllText(fileName.FullName, json);
             MessageBox.Show("JSON File exported in path: " + fileName.FullName, "File Exported", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -481,9 +518,18 @@ namespace RazorEnhanced
             {
                 string json = File.ReadAllText(fileName.FullName);
 
-                scannedItemsList = JsonConvert.DeserializeObject<List<UOObject>>(json);
+                var deserializedData = JsonConvert.DeserializeObject<ExportedData>(json);
+
+                scannedItemsList = deserializedData.ItemsTable;
                 scannedItemsList_CopyForFiltering = new List<UOObject>(scannedItemsList);
                 UpdateAllUI();
+
+                // Recover columns visibility
+                foreach (var columnInfo in deserializedData.ColumnsInfo)
+                {
+                    dataGrid.Columns[columnInfo.ColumnIndex].Visible = columnInfo.IsVisible;
+                }
+
                 MessageBox.Show("JSON File Imported", "File Imported", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             else
