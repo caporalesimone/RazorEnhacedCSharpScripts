@@ -34,6 +34,9 @@ Troubleshooting for the error: "Error (CS0006) at line 0: Metadata file 'Newtons
         - Changed the exported JSON structure to include columns visibility.
     Version 1.5:
         - Changed the exported JSON structure to include columns order.
+    Version 1.6:
+        - Previous export and import button renamed to Save and Load Project.
+        - Added a button to export the table into a CSV file.
 */
 
 using Newtonsoft.Json;
@@ -44,6 +47,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
@@ -52,7 +56,7 @@ namespace RazorEnhanced
 {
     class ContainerInspector : Form
     {
-        private const string version = "1.5";
+        private const string version = "1.6";
 
         #region User Interface
         private readonly System.Drawing.Font defaultFontRegular = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -72,8 +76,8 @@ namespace RazorEnhanced
         private RadioButton radioButton_AND;
         private RichTextBox Txt_SelectedItmProp;
         private DataTable originalTableWithoutFilters;
-        private Button cmdExport;
-        private Button cmdImport;
+        private Button cmdSaveProject;
+        private Button cmdImportProject;
         #endregion
 
         #region Global Variables
@@ -81,6 +85,7 @@ namespace RazorEnhanced
         private List<UOObject> scannedItemsList_CopyForFiltering = new();
         private Button cmdShowHiddenColumns;
         private Button cmdClearTable;
+        private Button cmdExportCSV;
         private int specialColumnsCount;
         #endregion
 
@@ -128,10 +133,11 @@ namespace RazorEnhanced
             this.radioButton_OR = new System.Windows.Forms.RadioButton();
             this.radioButton_AND = new System.Windows.Forms.RadioButton();
             this.Txt_SelectedItmProp = new System.Windows.Forms.RichTextBox();
-            this.cmdExport = new System.Windows.Forms.Button();
-            this.cmdImport = new System.Windows.Forms.Button();
+            this.cmdSaveProject = new System.Windows.Forms.Button();
+            this.cmdImportProject = new System.Windows.Forms.Button();
             this.cmdShowHiddenColumns = new System.Windows.Forms.Button();
             this.cmdClearTable = new System.Windows.Forms.Button();
+            this.cmdExportCSV = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSelectedObj)).BeginInit();
             this.statusStrip.SuspendLayout();
@@ -276,29 +282,29 @@ namespace RazorEnhanced
             this.Txt_SelectedItmProp.TabIndex = 12;
             this.Txt_SelectedItmProp.Text = "";
             // 
-            // cmdExport
+            // cmdSaveProject
             // 
-            this.cmdExport.Location = new System.Drawing.Point(1000, 11);
-            this.cmdExport.Name = "cmdExport";
-            this.cmdExport.Size = new System.Drawing.Size(120, 26);
-            this.cmdExport.TabIndex = 13;
-            this.cmdExport.Text = "Export Data";
-            this.cmdExport.UseVisualStyleBackColor = true;
-            this.cmdExport.Click += new System.EventHandler(this.CmdExport_Click);
+            this.cmdSaveProject.Location = new System.Drawing.Point(801, 11);
+            this.cmdSaveProject.Name = "cmdSaveProject";
+            this.cmdSaveProject.Size = new System.Drawing.Size(120, 26);
+            this.cmdSaveProject.TabIndex = 13;
+            this.cmdSaveProject.Text = "Save Project";
+            this.cmdSaveProject.UseVisualStyleBackColor = true;
+            this.cmdSaveProject.Click += new System.EventHandler(this.CmdSaveProject_Click);
             // 
-            // cmdImport
+            // cmdImportProject
             // 
-            this.cmdImport.Location = new System.Drawing.Point(1126, 11);
-            this.cmdImport.Name = "cmdImport";
-            this.cmdImport.Size = new System.Drawing.Size(120, 26);
-            this.cmdImport.TabIndex = 14;
-            this.cmdImport.Text = "Import Data";
-            this.cmdImport.UseVisualStyleBackColor = true;
-            this.cmdImport.Click += new System.EventHandler(this.CmdImport_Click);
+            this.cmdImportProject.Location = new System.Drawing.Point(927, 11);
+            this.cmdImportProject.Name = "cmdImportProject";
+            this.cmdImportProject.Size = new System.Drawing.Size(120, 26);
+            this.cmdImportProject.TabIndex = 14;
+            this.cmdImportProject.Text = "Import Project";
+            this.cmdImportProject.UseVisualStyleBackColor = true;
+            this.cmdImportProject.Click += new System.EventHandler(this.CmdImportProject_Click);
             // 
             // cmdShowHiddenColumns
             // 
-            this.cmdShowHiddenColumns.Location = new System.Drawing.Point(807, 11);
+            this.cmdShowHiddenColumns.Location = new System.Drawing.Point(608, 11);
             this.cmdShowHiddenColumns.Name = "cmdShowHiddenColumns";
             this.cmdShowHiddenColumns.Size = new System.Drawing.Size(187, 26);
             this.cmdShowHiddenColumns.TabIndex = 15;
@@ -316,13 +322,24 @@ namespace RazorEnhanced
             this.cmdClearTable.UseVisualStyleBackColor = true;
             this.cmdClearTable.Click += new System.EventHandler(this.CmdClearTable_Click);
             // 
+            // cmdExportCSV
+            // 
+            this.cmdExportCSV.Location = new System.Drawing.Point(1126, 11);
+            this.cmdExportCSV.Name = "cmdExportCSV";
+            this.cmdExportCSV.Size = new System.Drawing.Size(120, 26);
+            this.cmdExportCSV.TabIndex = 17;
+            this.cmdExportCSV.Text = "Export CSV";
+            this.cmdExportCSV.UseVisualStyleBackColor = true;
+            this.cmdExportCSV.Click += new System.EventHandler(this.cmdExportCSV_Click);
+            // 
             // ContainerInspector
             // 
             this.ClientSize = new System.Drawing.Size(1258, 744);
+            this.Controls.Add(this.cmdExportCSV);
             this.Controls.Add(this.cmdClearTable);
             this.Controls.Add(this.cmdShowHiddenColumns);
-            this.Controls.Add(this.cmdImport);
-            this.Controls.Add(this.cmdExport);
+            this.Controls.Add(this.cmdImportProject);
+            this.Controls.Add(this.cmdSaveProject);
             this.Controls.Add(this.Txt_SelectedItmProp);
             this.Controls.Add(this.radioButton_AND);
             this.Controls.Add(this.radioButton_OR);
@@ -481,9 +498,9 @@ namespace RazorEnhanced
 
             UpdateAllUI();
         }
-        private void CmdExport_Click(object sender, EventArgs e)
+        private void CmdSaveProject_Click(object sender, EventArgs e)
         {
-            string file = FileInputBox.Show("Export table into a file", "Insert filename that will be stored in DATA\nfolder of Razor Enhanced.\n", "ContainerInspector.json", ".json", this);
+            string file = FileInputBox.Show("Save this project into a file", "Insert filename that will be stored in DATA\nfolder of Razor Enhanced.\n", "ContainerInspectorProject.json", ".json", this);
             if (string.IsNullOrEmpty(file)) return;
 
             var columnsInfo = new List<ColumnInfo>();
@@ -513,9 +530,9 @@ namespace RazorEnhanced
             File.WriteAllText(fileName.FullName, json);
             MessageBox.Show("JSON File exported in path: " + fileName.FullName, "File Exported", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
-        private void CmdImport_Click(object sender, EventArgs e)
+        private void CmdImportProject_Click(object sender, EventArgs e)
         {
-            string file = FileInputBox.Show("Import table from a file", "Insert filename that will be imported\nfrom DATA folder of Razor Enhanced.\n", "ContainerInspector.json", ".json", this);
+            string file = FileInputBox.Show("Load an existing project from file", "Insert filename that will be imported\nfrom DATA folder of Razor Enhanced.\n", "ContainerInspectorProject.json", ".json", this);
             if (string.IsNullOrEmpty(file)) return;
 
             string _data_folder = Path.GetFullPath(Path.Combine(Assistant.Engine.RootPath, "Data"));
@@ -537,9 +554,6 @@ namespace RazorEnhanced
                     dataGrid.Columns[columnInfo.ColumnIndex].Visible = columnInfo.IsVisible;
                     dataGrid.Columns[columnInfo.ColumnIndex].DisplayIndex = columnInfo.DisplayIndex;
                 }
-
-
-
 
                 MessageBox.Show("JSON File Imported", "File Imported", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -563,6 +577,28 @@ namespace RazorEnhanced
             scannedItemsList.Clear();
             UpdateAllUI();
             originalTableWithoutFilters = (dataGrid.DataSource as DataTable).Copy();
+        }
+        private void cmdExportCSV_Click(object sender, EventArgs e)
+        {
+            string file = FileInputBox.Show("Export data into a CSV file", "Insert filename that will be stored in DATA\nfolder of Razor Enhanced.\n", "ContainerInspectorExport.csv", ".csv", this);
+            if (string.IsNullOrEmpty(file)) return;
+
+            DataTable table = (DataTable)dataGrid.DataSource;
+
+            StringBuilder csvContent = new StringBuilder();
+
+            IEnumerable<string> columnNames = table.Columns.Cast<DataColumn>().Select(column => column.ColumnName);
+            csvContent.AppendLine(string.Join(",", columnNames));
+
+            foreach (DataRow row in table.Rows)
+            {
+                IEnumerable<string> fields = row.ItemArray.Select(field => field.ToString());
+                csvContent.AppendLine(string.Join(",", fields));
+            }
+
+            string _data_folder = Path.GetFullPath(Path.Combine(Assistant.Engine.RootPath, "Data"));
+            FileInfo fileName = new(Path.Combine(_data_folder, file));
+            File.WriteAllText(fileName.FullName, csvContent.ToString());
         }
 
         #endregion
