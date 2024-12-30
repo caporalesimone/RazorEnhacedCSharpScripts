@@ -37,6 +37,8 @@ Troubleshooting for the error: "Error (CS0006) at line 0: Metadata file 'Newtons
     Version 1.6:
         - Previous export and import button renamed to Save and Load Project.
         - Added a button to export the table into a CSV file.
+    Version 1.7
+        - Fixed a bug on retieving the item. (Distance was wrongly checked)
 */
 
 using Newtonsoft.Json;
@@ -56,7 +58,7 @@ namespace RazorEnhanced
 {
     class ContainerInspector : Form
     {
-        private const string version = "1.6";
+        private const string version = "1.7";
 
         #region User Interface
         private readonly System.Drawing.Font defaultFontRegular = new("Cascadia Mono", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -426,7 +428,7 @@ namespace RazorEnhanced
             int serial = Convert.ToInt32(row[0].Cells["Serial"].Value.ToString(), 16);
             Item item = Items.FindBySerial(serial);
 
-            var distance = Player.DistanceTo(item);
+            var distance = Player.DistanceTo(item.RootContainer);
             if (distance > 2)
             {
                 Player.HeadMessage(33, "Item is too far away");
